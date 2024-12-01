@@ -238,7 +238,8 @@
           address,
           'basicDetails.profile.selfieUrl': selfieUrl,
           products: [],
-          ordersReceived: new Map()
+          ordersReceived: new Map(),
+          trades: []
         });
       } else {
         newUser = new User(userData);

@@ -9,9 +9,7 @@ const farmerSchema = new mongoose.Schema({
       selfieUrl: String // Add this line to store the selfie URL
     }
   },
-  
-  products: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }], // This remains an array
-
+  products: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   ordersReceived: {
     type: Map,
     of: new mongoose.Schema({
@@ -22,10 +20,19 @@ const farmerSchema = new mongoose.Schema({
           quantity: Number 
         }
       ], 
-      totalEarnings: Number, // Add the products field
+      totalEarnings: Number,
       timestamp: { type: Date, default: Date.now }
     })
-  }
+  },
+  trades: [
+    {
+      tradeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trade' },
+      status: { type: String, enum: ['open', 'closed'], default: 'open' },
+      createdAt: { type: Date, default: Date.now },
+      cropName: { type: String },
+      quantityInTons: { type: Number }
+    }
+  ]
 });
 
 module.exports = mongoose.model('Farmer', farmerSchema);

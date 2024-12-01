@@ -4,7 +4,12 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const auth = require('./middleware/auth');
+const trades = require('./trades');
 
+
+
+const emailRoutes = require('./routes/emailRoutes');
+const tradeRoutes = require('./routes/tradeRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -46,7 +51,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions)); // Apply CORS with options
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://Harsh:Garimais%3C3@swastik.ikw5v.mongodb.net/Swastik')
+mongoose.connect('mongodb://localhost:44275/swastik')
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
 
@@ -68,8 +73,12 @@ app.use('/api/review', reviewRoutes);
 app.use('/api/useraddress', addressRoutes);
 app.use('/api/orderstatus', orderstatusRoutes);
 
+
 // File upload routes
 app.use('/api/upload', fileUploadRouter);
+app.use('/api', emailRoutes);
+app.use('/api/trades', tradeRoutes);
+
 
 // Specific route for farmer selfie upload
 app.post('/api/upload/farmer-selfie', auth, upload.single('selfie'), (req, res) => {
@@ -86,21 +95,7 @@ app.post('/api/upload/farmer-selfie', auth, upload.single('selfie'), (req, res) 
 // Serve static files from the upload directory
 app.use('/uploads', express.static(UPLOAD_DIR));
 
-// Email route
-app.post('/api/send-code', async (req, res) => {
-  const { email } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ message: 'Email is required' });
-  }
-
-  try {
-    const code = await sendEmail(email);
-    res.json({ message: 'Verification code sent', code });
-  } catch (error) {
-    res.status(500).json({ message: 'Error sending email', error: error.message });
-  }
-});
 
 // Product search route
 app.get('/api/products/search', async (req, res) => {
@@ -126,82 +121,125 @@ app.use((err, req, res, next) => {
 const wss = new WebSocket.Server({ port: 8080 });
 console.log("WebSocket Server running on ws://localhost:8080");
 
-// Map to track trades
-const trades = new Map();
+
 
 // Generate WebSocket URL for a trade
 function generateTradeUrl() {
-    return `ws://localhost:8080/trade/${uuid.v4()}`;
+  return `ws://localhost:8080/trade/${uuid.v4()}`;
 }
 
 // Handle WebSocket connection
 wss.on('connection', (ws, req) => {
-    const tradeId = req.url.split('/').pop();
+  const tradeId = req.url.split('/').pop();
+  
+  // Ensure that the trade exists before connecting
+  if (!trades.has(tradeId)) {
+    console.error(`Invalid WebSocket connection attempt for trade ID: ${tradeId}`);
+    ws.close();
+    return;
+  }
 
-    if (!trades.has(tradeId)) {
-        console.error(`Invalid WebSocket connection attempt for trade ID: ${tradeId}`);
-        ws.close();
+  const trade = trades.get(tradeId);
+  trade.ws = ws;
+  console.log(`Trade WebSocket opened for trade ID: ${tradeId}`);
+
+  ws.on('message', async (message) => {
+    console.log(`Received message for trade ${tradeId}: ${message}`);
+    
+    try {
+      const offerDetails = JSON.parse(message); // Assuming JSON format
+
+      // Validate the offer amount
+      if (offerDetails.amount <= trade.lastOfferAmount) {
+        ws.send(JSON.stringify({ error: 'Offer must be higher than the last one.' }));
         return;
+      }
+
+      // Add the new offer to the trade
+      await addOffer(tradeId, offerDetails);
+      console.log(`Offer added for trade ${tradeId}:`, offerDetails);
+
+      // Reset inactivity timer for this trade
+      handleTradeActivity(tradeId);
+    } catch (err) {
+      console.error('Error processing trade offer:', err);
     }
+  });
 
-    trades.get(tradeId).ws = ws;
-    console.log(`Trade WebSocket opened for trade ID: ${tradeId}`);
-
-    ws.on('message', (message) => {
-        console.log(`Received message for trade ${tradeId}: ${message}`);
-        handleTradeActivity(tradeId); // Reset inactivity timer
-    });
-
-    ws.on('close', () => {
-        console.log(`WebSocket closed for trade ID: ${tradeId}`);
-        trades.delete(tradeId); // Clean up the trade on WebSocket closure
-    });
+  ws.on('close', () => {
+    console.log(`WebSocket closed for trade ID: ${tradeId}`);
+    trades.delete(tradeId);
+  });
 });
 
 // Handle trade activity and reset the inactivity timer
 function handleTradeActivity(tradeId) {
-    if (!trades.has(tradeId)) return;
+  if (!trades.has(tradeId)) return;
 
-    const trade = trades.get(tradeId);
+  const trade = trades.get(tradeId);
 
-    // Clear the existing timer
-    if (trade.timer) clearTimeout(trade.timer);
+  // Clear the existing timer
+  if (trade.timer) clearTimeout(trade.timer);
 
-    // Set a new timer for 1 hour
-    trade.timer = setTimeout(() => {
-        closeTrade(tradeId);
-    }, 60 * 60 * 1000); // 1 hour in milliseconds
+  // Set a new timer for 1 hour
+  trade.timer = setTimeout(() => {
+    finalizeTrade(tradeId); // Finalize the trade if no offers are received in 1 hour
+  }, 60 * 60 * 1000); // 1 hour in milliseconds
 }
 
-// Close a trade due to inactivity
-function closeTrade(tradeId) {
-    const trade = trades.get(tradeId);
-    if (trade && trade.ws) {
-        trade.ws.close(); // Close WebSocket connection
-        console.log(`Trade ${tradeId} automatically closed after 1 hour of inactivity.`);
-        trades.delete(tradeId); // Remove trade from the map
-    }
+// Close the trade if no activity (finalize it)
+async function finalizeTrade(tradeId) {
+  const trade = trades.get(tradeId);
+
+  if (!trade) return;
+
+  if (trade.ws) {
+    trade.ws.close(); // Close WebSocket connection
+  }
+
+  // Finalize the trade with the last offer received
+  if (trade.trades.length > 0) {
+    const lastOffer = trade.trades[trade.trades.length - 1];
+    trade.finalTrade = {
+      companyName: lastOffer.companyName,
+      companyId: lastOffer.companyId,
+      amount: lastOffer.amount,
+      timestamp: new Date()
+    };
+    trade.status = 'closed'; // Update status to closed
+    await trade.save();
+    console.log(`Trade ${tradeId} automatically closed after 1 hour of inactivity.`);
+  }
+
+  trades.delete(tradeId); // Remove trade from the map
 }
 
+// Add a new offer to the trade
+async function addOffer(tradeId, offerDetails) {
+  const trade = await Trade.findById(tradeId);
 
+  if (!trade) {
+    console.log('Trade not found');
+    return;
+  }
 
-
-
-
-// Create a new trade and generate a WebSocket URL
-app.post('/api/trades/create', (req, res) => {
-  const tradeId = uuid.v4();
-  const tradeUrl = `ws://localhost:8080/trade/${tradeId}`;
-
-  trades.set(tradeId, { ws: null, timer: null });
-  console.log(`Trade created with ID: ${tradeId}, WebSocket URL: ${tradeUrl}`);
-
-  res.status(201).json({
-      message: 'Trade created successfully',
-      tradeId,
-      tradeUrl
+  // Add the offer to the trades array
+  trade.trades.push({
+    companyName: offerDetails.companyName,
+    companyId: offerDetails.companyId,
+    amount: offerDetails.amount,
+    timestamp: new Date()
   });
-});
+
+  // Update the last offer amount
+  trade.lastOfferAmount = offerDetails.amount;
+
+  await trade.save();
+  console.log('Offer added:', trade);
+}
+
+
+
 
 // Start the server
 const port = 5009;
