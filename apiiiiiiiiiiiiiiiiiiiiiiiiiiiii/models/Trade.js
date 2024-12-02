@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
+const uuid = require('uuid'); // For generating unique trade IDs
 
 const tradeSchema = new mongoose.Schema({
+  tradeId: {
+    type: String,
+    default: () => uuid.v4(), // Automatically generate UUID for each trade
+    unique: true, // Ensure uniqueness
+    required: true
+  },
   cropName: {
     type: String,
     required: true,
@@ -17,21 +24,25 @@ const tradeSchema = new mongoose.Schema({
     trim: true
   },
   farmerId: {
-    type: mongoose.Schema.Types.ObjectId, // Assuming the farmer ID is an ObjectId
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Farmer' // Reference to a Farmer collection
+    ref: 'Farmer'
   },
   trades: [
     {
+      tradeId: {
+        type: String, // Each trade will have its own unique ID
+        required: true
+      },
       companyName: {
         type: String,
         required: true,
         trim: true
       },
       companyId: {
-        type: mongoose.Schema.Types.ObjectId, // Assuming the company ID is an ObjectId
+        type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Company' // Reference to a Company collection
+        ref: 'Company'
       },
       amount: {
         type: Number,
@@ -40,31 +51,35 @@ const tradeSchema = new mongoose.Schema({
       },
       timestamp: {
         type: Date,
-        default: Date.now // Automatically records the time of the trade
+        default: Date.now
       }
     }
   ],
   finalTrade: {
+    tradeId: {
+      type: String,
+      required: false // May be null until finalized
+    },
     companyName: {
-      type: String, // Finalized company's name
+      type: String,
       trim: true
     },
     companyId: {
-      type: mongoose.Schema.Types.ObjectId, // Finalized company's ID
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Company'
     },
     amount: {
-      type: Number, // Finalized amount
+      type: Number,
       min: 0
     },
     timestamp: {
-      type: Date, // Finalized trade time
+      type: Date,
       default: Date.now
     }
   },
   status: {
     type: String,
-    enum: ['open', 'closed'], // Only 'open' or 'closed' allowed
+    enum: ['open', 'closed'],
     default: 'open'
   },
   createdAt: {

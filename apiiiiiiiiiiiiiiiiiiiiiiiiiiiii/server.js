@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -8,6 +9,7 @@ const trades = require('./trades');
 
 
 
+const companyRoutes = require('./routes/companyRoutes');
 const emailRoutes = require('./routes/emailRoutes');
 const tradeRoutes = require('./routes/tradeRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -23,13 +25,15 @@ const orderstatusRoutes = require('./routes/orderstatusRoutes');
 const { router: fileUploadRouter, upload } = require('./controllers/fileuploadController');
 const sendEmail = require('./controllers/component/sendEmail');
 const productController = require('./controllers/productController');
-
+const JWT_SECRET = process.env.JWT_SECRET;
 //
 //  for web socket
 //
 const WebSocket = require('ws');
 const uuid = require('uuid');
 
+const uploadRoutes = require('./routes/uploadRoutes');
+const otpRoutes = require('./routes/otpRoutes');
 
 //
 //
@@ -40,7 +44,7 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: '*', // Allow all origins
+  origin: ['http://localhost:3000', 'http://localhost:5009'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
@@ -50,11 +54,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions)); // Apply CORS with options
 
-// MongoDB connection
+// Simplified MongoDB connection
 mongoose.connect('mongodb://localhost:44275/swastik')
   .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Could not connect to MongoDB', err));
+  .catch(err => console.error('Could not connect to MongoDB:', err));
+// // Update MongoDB connection
+// const MONGODB_URI = "mongodb://root:garima@localhost:44276,localhost:44277,localhost:44278/swastik?replicaSet=rs0&authSource=admin&retryWrites=true&w=majority";
 
+// mongoose.connect(MONGODB_URI, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// })
+// .then(() => console.log('Connected to MongoDB'))
+// .catch(err => console.error('Could not connect to MongoDB:', err));
 // Set up upload directory
 const UPLOAD_DIR = '/home/ec2-user/uploads';
 
@@ -72,25 +84,26 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/useraddress', addressRoutes);
 app.use('/api/orderstatus', orderstatusRoutes);
-
+app.use('/api/companies', companyRoutes);
 
 // File upload routes
-app.use('/api/upload', fileUploadRouter);
+app.use('/api/upload', uploadRoutes);
 app.use('/api', emailRoutes);
 app.use('/api/trades', tradeRoutes);
+app.use('/api', otpRoutes);
 
 
-// Specific route for farmer selfie upload
-app.post('/api/upload/farmer-selfie', auth, upload.single('selfie'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No selfie uploaded' });
-  }
-  const selfieUrl = `/uploads/selfies/${req.user.userId}/${req.file.filename}`;
-  res.json({
-    message: 'Farmer selfie uploaded successfully',
-    selfieUrl: selfieUrl
-  });
-});
+// // Specific route for farmer selfie upload
+// app.post('/api/upload/farmer-selfie', auth, upload.single('selfie'), (req, res) => {
+//   if (!req.file) {
+//     return res.status(400).json({ message: 'No selfie uploaded' });
+//   }
+//   const selfieUrl = `/uploads/selfies/${req.user.userId}/${req.file.filename}`;
+//   res.json({
+//     message: 'Farmer selfie uploaded successfully',
+//     selfieUrl: selfieUrl
+//   });
+// });
 
 // Serve static files from the upload directory
 app.use('/uploads', express.static(UPLOAD_DIR));
@@ -240,7 +253,9 @@ async function addOffer(tradeId, offerDetails) {
 
 
 
-
 // Start the server
 const port = 5009;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () => console.log(`Server running on port ${port} and JWT token is `));
+
+// Add this after your other middleware configurations
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

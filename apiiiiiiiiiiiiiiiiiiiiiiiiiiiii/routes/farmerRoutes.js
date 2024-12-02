@@ -1,17 +1,14 @@
 // routes/farmerRoutes.js
 const express = require('express');
-const farmerController = require('../controllers/farmerController');
-const auth = require('../middleware/auth');
-const authorize = require('../middleware/authorize');
 const router = express.Router();
+const auth = require('../middleware/auth');
+const farmerController = require('../controllers/farmerController');
 
-router.post('/products', auth, authorize('farmer'), farmerController.addProduct);
-router.get('/orders', auth, authorize('farmer'), farmerController.getReceivedOrders);
-// New routes
-router.get('/products', auth, authorize('farmer'), farmerController.getFarmerProducts);
+// Farmer routes
+router.post('/products', auth, farmerController.addProduct);
+router.get('/products', auth, farmerController.getFarmerProducts);
+router.get('/orders', auth, farmerController.getReceivedOrders);
+router.delete('/products/:id', auth, farmerController.deleteProduct);
+router.put('/products/:id', auth, farmerController.updateProduct);
 
-
-router.delete('/products/:id',  auth, authorize('farmer'),farmerController.deleteProduct);
-router.patch('/products/:id',  auth, authorize('farmer'), farmerController.updateProduct);
-
-module.exports = router;
+module.exports = router;  // Export the router

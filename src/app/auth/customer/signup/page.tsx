@@ -15,9 +15,16 @@ const SignUpPage: React.FC = () => {
     confirmPassword: '',
   });
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Send OTP to email
+    const response = await fetch('http://localhost:5009/api/auth/send-otp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
     setStep(2);
   };
 

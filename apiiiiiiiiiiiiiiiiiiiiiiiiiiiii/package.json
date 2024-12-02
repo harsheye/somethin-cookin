@@ -3,6 +3,7 @@
     "@google/generative-ai": "^0.20.0",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
@@ -12,9 +13,13 @@
     "jsonwebtoken": "^9.0.2",
     "mailgun.js": "^10.2.3",
     "mongoose": "^8.7.0",
+    "node-cron": "^3.0.3",
     "nodemon": "^3.1.7",
+    "react-hot-toast": "^2.4.1",
+    "twilio": "^5.3.6",
     "uuid": "^11.0.3",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "jest": "^29.7.0",

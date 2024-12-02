@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const sendEmailController = require('../controllers/sendEmailController');
+const emailController = require('../controllers/emailController');
 
-// Route for sending a verification code via email
-router.post('/send-code', sendEmailController.sendVerificationCode);
+router.post('/send-verification-email', emailController.sendVerificationEmail);
+router.post('/verify-email', emailController.verifyEmail);
 
 module.exports = router;

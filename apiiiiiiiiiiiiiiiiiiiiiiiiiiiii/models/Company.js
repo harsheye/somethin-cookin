@@ -39,6 +39,13 @@ const companySchema = new mongoose.Schema({
         unique: true,
         match: [/\S+@\S+\.\S+/, 'Please enter a valid email address']
     },
+    // Add this field to the existing companySchema
+password: {
+    type: String,
+    required: true,
+    minlength: 6
+  }
+,  
     address: {
         type: String,
         required: true
