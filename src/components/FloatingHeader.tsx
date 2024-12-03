@@ -12,7 +12,7 @@ const FloatingHeader = () => {
     <motion.div
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur-lg rounded-full shadow-lg px-6 py-3 flex items-center gap-4"
+      className="fixed bottom-4 left-[42%] transform -translate-x-1/2 bg-white/80 backdrop-blur-lg rounded-full shadow-lg px-6 py-3 flex items-center gap-4"
     >
       <motion.button
         whileHover={{ scale: 1.1 }}

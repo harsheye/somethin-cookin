@@ -1,30 +1,44 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import RoleSelectionModal from './RoleSelectionModal';
 
-const AuthButtons = () => {
+export const AuthButtons = () => {
   const router = useRouter();
+  const [showRoleModal, setShowRoleModal] = useState(false);
 
   return (
-    <div className="flex space-x-4">
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => router.push('/auth/farmer/login')}
-        className="text-green-600 hover:text-green-700 px-4 py-2 rounded-md text-sm font-medium"
-      >
-        Login
-      </motion.button>
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => router.push('/auth/farmer/signup')}
-        className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600"
-      >
-        Sign Up
-      </motion.button>
-    </div>
+    <>
+      <div className="flex items-center gap-4">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => router.push('/auth/farmer/login')}
+          className="px-4 py-2 text-green-600 hover:text-green-700"
+        >
+          Login
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowRoleModal(true)}
+          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+        >
+          Sign Up
+        </motion.button>
+      </div>
+
+      <AnimatePresence>
+        {showRoleModal && (
+          <RoleSelectionModal 
+            isOpen={showRoleModal} 
+            onClose={() => setShowRoleModal(false)} 
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

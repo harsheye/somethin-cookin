@@ -40,6 +40,7 @@ const FarmerSignup: React.FC = () => {
   const [emailTimer, setEmailTimer] = useState(0);
   const [smsTimer, setSmsTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedOTP, setGeneratedOTP] = useState<string>('');
 
   const [formData, setFormData] = useState<FormData>({
     username: '',
@@ -553,6 +554,15 @@ const FarmerSignup: React.FC = () => {
       return; // Don't allow going back from email verification
     }
     goToPreviousStep();
+  };
+
+  const handleSendVerificationCode = async () => {
+    // Generate a 4-digit OTP locally
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    setGeneratedOTP(otp); // Store it in state to display
+    setEmailSent(true);
+    setOtpTimer(120);
+    toast.success('Verification code generated');
   };
 
   return (

@@ -55,41 +55,24 @@ const Marketplace = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:5009/api/products/search?` + 
-        `page=${currentPage}&` +
-        `search=${debouncedSearch}&` +
-        `category=${selectedCategory}&` +
-        `sort=${sortBy}`
+        `http://localhost:5009/api/products/?page=${currentPage}`
       );
-
+  
       if (!response.ok) throw new Error('Failed to fetch products');
-
+  
       const data = await response.json();
       setProducts(data.products);
       setTotalPages(data.totalPages);
     } catch (error) {
+      console.error('Error fetching products:', error);
       setProducts([]);
       setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
-
   const handleAddToCart = async (product: Product) => {
-    const cartItem = {
-      id: `${product.id}-${Date.now()}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: product.images[0],
-      farmer: {
-        name: product.farmer.name,
-        location: product.farmer.location
-      }
-    };
-
-    addToCart(cartItem);
+    addToCart(product.id);
   };
 
   return (
@@ -222,7 +205,7 @@ const Marketplace = () => {
               >
                 <div className="relative h-48">
                   <img
-                    src={product.images[0]}
+                    src={product.name}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />

@@ -1,265 +1,566 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { FaEnvelope, FaLock, FaSeedling, FaArrowRight, FaTractor, FaHandHoldingUsd, FaUsers, FaChartLine } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FaUser, FaPhone, FaMapMarkerAlt, FaPlus, 
+  FaEdit, FaTrash, FaStar, FaShoppingBag,
+  FaHeart, FaHistory
+} from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
-import { TypeAnimation } from 'react-type-animation';
-import FloatingHeader from '@/components/FloatingHeader';
+import { useRouter } from 'next/navigation';
+import { jwtDecode } from "jwt-decode";
 
-const FarmerLoginPage: React.FC = () => {
+interface Address {
+  _id: string;
+  name: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
+  isDefault: boolean;
+}
+
+interface Order {
+  id: string;
+  orderId: string;
+  items: Array<{
+    product: {
+      name: string;
+      price: number;
+    };
+    quantity: number;
+  }>;
+  totalPrice: number;
+  status: string;
+  createdAt: string;
+  address: {
+    name: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+}
+
+interface UserProfile {
+  _id: string;
+  basicDetails: {
+    profile: {
+      mobileNo: string;
+      name: string;
+      pincode: string;
+    };
+    userRole: string;
+  };
+  addresses: Address[];
+}
+
+type TabType = 'profile' | 'addresses' | 'orders' | 'wishlist';
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  exp: number;
+}
+
+export default function ProfilePage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    rememberMe: false
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('profile');
+  const [showAddAddress, setShowAddAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [tokenData, setTokenData] = useState<DecodedToken | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      toast.error('Please login first');
+      router.push('/auth/login');
+      return;
+    }
 
     try {
-      toast.loading('Logging in...', { id: 'login' });
+      const decoded = jwtDecode<DecodedToken>(token);
+      setTokenData(decoded);
+      fetchProfile(token, decoded.userId);
+    } catch (error) {
+      console.error('Token decode error:', error);
+      toast.error('Invalid session');
+      router.push('/auth/login');
+    }
+  }, [router]);
 
-      const response = await fetch('http://localhost:5009/api/auth/login', {
-        method: 'POST',
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchOrders();
+    }
+  }, [activeTab]);
+
+  const fetchProfile = async (token: string, userId: string) => {
+    try {
+      setLoading(true);
+      
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+
+      const profileResponse = await fetch(`http://localhost:5009/api/users/${userId}`, {
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+          'Authorization': `Bearer ${token}`
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
+      if (!profileResponse.ok) {
+        const error = await profileResponse.json();
+        throw new Error(error.message || 'Failed to fetch profile');
       }
 
-      const data = await response.json();
-      const { token, userRole } = data;
+      const profileData = await profileResponse.json();
+      console.log('Profile Data:', profileData);
+      setProfile(profileData);
 
-      // Store token and role in both localStorage and cookies
-      if (formData.rememberMe) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('userRole', userRole);
-      } else {
-        sessionStorage.setItem('token', token);
-        sessionStorage.setItem('userRole', userRole);
+      // Fetch addresses
+      const addressResponse = await fetch('http://localhost:5009/api/useraddress/address', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (addressResponse.ok) {
+        const addressData = await addressResponse.json();
+        if (Array.isArray(addressData)) {
+          setProfile(prev => prev ? { ...prev, addresses: addressData } : null);
+        }
       }
 
-      // Set cookies
-      document.cookie = `token=${token}; path=/`;
-      document.cookie = `userRole=${userRole}; path=/`;
-
-      toast.success('Welcome back!', { id: 'login' });
-
-      // Redirect based on user role
-      if (userRole === 'farmer') {
-        router.push('/farmer-dashboard');
-      } else {
-        router.push('/marketplace');
-      }
     } catch (error) {
-      toast.error('Invalid username or password', { id: 'login' });
+      console.error('Profile fetch error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to load profile data');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl w-full flex gap-8">
-        {/* Info Side - Now on the left */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block flex-1 bg-white p-8 rounded-xl shadow-lg overflow-hidden"
-        >
-          <div className="mb-8">
-            <h2 className="text-4xl font-bold text-green-700 mb-4">
-              Join the{' '}
-              <TypeAnimation
-                sequence={[
-                  'Farmers',
-                  2000,
-                  'Evolution',
-                  2000,
-                  'Future',
-                  2000,
-                  'Community',
-                  2000,
-                  'Indian Agriculture',
-                  2000,
-                ]}
-                wrapper="span"
-                repeat={Infinity}
-                className="text-green-500"
-              />
-            </h2>
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5009/api/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch orders');
+
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      toast.error('Failed to load orders');
+    }
+  };
+
+  const handleAddAddress = async (addressData: Omit<Address, '_id'>) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5009/api/useraddress/address', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(addressData)
+      });
+
+      if (!response.ok) throw new Error('Failed to add address');
+
+      toast.success('Address added successfully');
+      fetchProfile();
+      setShowAddAddress(false);
+    } catch (error) {
+      toast.error('Failed to add address');
+    }
+  };
+
+  const handleEditAddress = async (addressId: string, addressData: Partial<Address>) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5009/api/useraddress/address/${addressId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(addressData)
+      });
+
+      if (!response.ok) throw new Error('Failed to update address');
+
+      toast.success('Address updated successfully');
+      fetchProfile();
+      setEditingAddress(null);
+    } catch (error) {
+      toast.error('Failed to update address');
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5009/api/useraddress/address/${addressId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to delete address');
+
+      toast.success('Address deleted successfully');
+      fetchProfile();
+    } catch (error) {
+      toast.error('Failed to delete address');
+    }
+  };
+
+  const handleSetDefaultAddress = async (addressId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5009/api/useraddress/address/${addressId}/default`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ isDefault: true })
+      });
+
+      if (!response.ok) throw new Error('Failed to set default address');
+
+      toast.success('Default address updated');
+      fetchProfile();
+    } catch (error) {
+      toast.error('Failed to set default address');
+    }
+  };
+
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: FaUser },
+    { id: 'addresses', label: 'Addresses', icon: FaMapMarkerAlt },
+    { id: 'orders', label: 'Orders', icon: FaShoppingBag },
+    { id: 'wishlist', label: 'Wishlist', icon: FaHeart }
+  ];
+
+  const renderProfileInfo = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-gray-500">User ID</label>
+            <p className="font-medium">{tokenData?.userId || 'Loading...'}</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              {
-                icon: FaTractor,
-                title: "Modern Farming",
-                description: "Access to latest agricultural technologies",
-                color: "from-green-400 to-green-600"
-              },
-              {
-                icon: FaHandHoldingUsd,
-                title: "Better Profits",
-                description: "Direct market access for better returns",
-                color: "from-blue-400 to-blue-600"
-              },
-              {
-                icon: FaUsers,
-                title: "Community",
-                description: "Connect with fellow farmers",
-                color: "from-purple-400 to-purple-600"
-              },
-              {
-                icon: FaChartLine,
-                title: "Growth",
-                description: "Scale your farming business",
-                color: "from-orange-400 to-orange-600"
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                whileTap={{ scale: 0.95 }}
-                className={`p-4 rounded-xl bg-gradient-to-br ${item.color} text-white transform transition-all duration-300 hover:shadow-xl cursor-pointer`}
-              >
-                <item.icon className="text-3xl mb-2" />
-                <h3 className="font-bold mb-1">{item.title}</h3>
-                <p className="text-sm opacity-90">{item.description}</p>
-              </motion.div>
-            ))}
+          <div>
+            <label className="text-sm text-gray-500">Full Name</label>
+            <p className="font-medium">{profile?.basicDetails.profile.name || 'Loading...'}</p>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-8 p-4 bg-green-50 rounded-lg border border-green-200"
-          >
-            <h3 className="font-bold text-green-700 mb-2">Why Choose Us?</h3>
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-sm text-green-600">
-                <FaSeedling /> Advanced farming solutions
-              </li>
-              <li className="flex items-center gap-2 text-sm text-green-600">
-                <FaSeedling /> 24/7 Expert support
-              </li>
-              <li className="flex items-center gap-2 text-sm text-green-600">
-                <FaSeedling /> Secure transactions
-              </li>
-            </ul>
-          </motion.div>
-        </motion.div>
-
-        {/* Login Form - Now on the right */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex-1 bg-white p-8 rounded-xl shadow-lg"
-        >
-          <div className="flex justify-center mb-6">
-            <img 
-              src="/swastik-logo.png" 
-              alt="Swastik Logo" 
-              className="h-20 w-auto"
-            />
+          <div>
+            <label className="text-sm text-gray-500">Role</label>
+            <p className="font-medium capitalize">{profile?.basicDetails.userRole || 'Loading...'}</p>
           </div>
-          
-          <h2 className="text-3xl font-bold text-center text-green-700 mb-8">
-            Welcome Back, Farmer!
-          </h2>
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Username or Email
-              </label>
-              <div className="relative">
-                <FaEnvelope className="absolute top-3 left-3 text-green-500" />
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="pl-10 w-full p-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <FaLock className="absolute top-3 left-3 text-green-500" />
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="pl-10 w-full p-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                  className="h-4 w-4 text-green-500 focus:ring-green-500 border-gray-300 rounded"
-                />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
-              </label>
-
-              <button
-                type="button"
-                onClick={() => router.push('/auth/forgot-password')}
-                className="text-sm text-green-600 hover:text-green-500"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors duration-300 disabled:opacity-50"
-            >
-              {isLoading ? (
-                <FaSeedling className="animate-spin" />
-              ) : (
-                <>
-                  Login <FaArrowRight />
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <button
-              onClick={() => router.push('/auth/farmer/signup')}
-              className="text-green-600 hover:text-green-500"
-            >
-              Sign up now
-            </button>
-          </p>
-        </motion.div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-gray-500">Phone Number</label>
+            <p className="font-medium">{profile?.basicDetails.profile.mobileNo || 'Loading...'}</p>
+          </div>
+          <div>
+            <label className="text-sm text-gray-500">Pincode</label>
+            <p className="font-medium">{profile?.basicDetails.profile.pincode || 'Loading...'}</p>
+          </div>
+        </div>
       </div>
-      <FloatingHeader />
     </div>
   );
-};
 
-export default FarmerLoginPage;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-32 bg-white rounded-xl mb-8" />
+            <div className="h-64 bg-white rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 pt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Profile Header */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+              <FaUser className="text-3xl text-green-600" />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {profile?.basicDetails.profile.name || 'Loading...'}
+                  </h1>
+                  <p className="text-sm text-gray-500">
+                    {profile?.basicDetails.profile.mobileNo || 'Loading...'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                    {profile?.basicDetails.userRole || 'Loading...'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4 mt-4">
+                <span className="flex items-center gap-2 text-gray-600">
+                  <FaPhone className="text-green-500" />
+                  {profile?.basicDetails.profile.mobileNo || 'Loading...'}
+                </span>
+                <span className="flex items-center gap-2 text-gray-600">
+                  <FaMapMarkerAlt className="text-green-500" />
+                  {profile?.basicDetails.profile.pincode || 'Loading...'}
+                </span>
+                <span className="text-sm text-gray-500">
+                  User ID: {tokenData?.userId || 'Loading...'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-xl shadow-sm mb-8">
+          <div className="flex border-b">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
+                  activeTab === tab.id 
+                    ? 'text-green-600 border-b-2 border-green-500 bg-green-50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <tab.icon /> {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          {loading ? (
+            <div className="space-y-4 animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              {activeTab === 'profile' && (
+                <motion.div
+                  key="profile"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold">Profile Information</h2>
+                  </div>
+                  {renderProfileInfo()}
+                </motion.div>
+              )}
+
+              {activeTab === 'addresses' && (
+                <motion.div
+                  key="addresses"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold">Delivery Addresses</h2>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setShowAddAddress(true)}
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                    >
+                      <FaPlus className="inline mr-2" /> Add Address
+                    </motion.button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {profile?.addresses?.map((address) => (
+                      <motion.div
+                        key={address._id}
+                        layout
+                        className="border rounded-lg p-4 relative"
+                      >
+                        {address.isDefault && (
+                          <span className="absolute top-2 right-2 text-yellow-500">
+                            <FaStar />
+                          </span>
+                        )}
+                        <h3 className="font-semibold">{address.name}</h3>
+                        <p className="text-sm text-gray-500 mt-1">{address.phoneNumber}</p>
+                        <p className="text-sm text-gray-600 mt-2">
+                          {address.street}, {address.city}, {address.state}, {address.country} - {address.zipCode}
+                        </p>
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            onClick={() => setEditingAddress(address)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAddress(address._id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <FaTrash />
+                          </button>
+                          {!address.isDefault && (
+                            <button
+                              onClick={() => handleSetDefaultAddress(address._id)}
+                              className="text-gray-600 hover:text-gray-700"
+                            >
+                              Set as Default
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'orders' && (
+                <motion.div
+                  key="orders"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold">Order History</h2>
+                  </div>
+
+                  {orders.length === 0 ? (
+                    <div className="text-center py-12">
+                      <FaShoppingBag className="text-4xl text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700">No Orders Yet</h3>
+                      <p className="text-gray-500">Your order history will appear here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.map((order) => (
+                        <motion.div
+                          key={order.id}
+                          layout
+                          className="bg-white rounded-lg shadow-sm p-6"
+                        >
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="font-semibold">Order #{order.orderId}</h3>
+                              <p className="text-sm text-gray-500">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm ${
+                              order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                              order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                              order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+
+                          <div className="border-t border-b py-4 mb-4">
+                            {order.items.map((item, index) => (
+                              <div key={index} className="flex justify-between items-center mb-2">
+                                <div>
+                                  <p className="font-medium">{item.product.name}</p>
+                                  <p className="text-sm text-gray-500">
+                                    Quantity: {item.quantity}
+                                  </p>
+                                </div>
+                                <p className="font-medium">
+                                  ₹{item.product.price * item.quantity}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="text-sm text-gray-500">Delivered to:</p>
+                              <p className="text-sm">
+                                {order.address.name}, {order.address.street},
+                                {order.address.city}, {order.address.state} - {order.address.zipCode}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-gray-500">Total Amount</p>
+                              <p className="text-xl font-bold text-green-600">
+                                ₹{order.totalPrice}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {activeTab === 'wishlist' && (
+                <motion.div
+                  key="wishlist"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <h2 className="text-xl font-bold mb-6">My Wishlist</h2>
+                  {/* Wishlist content */}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+        </div>
+
+        {/* Address Modals */}
+        <AnimatePresence>
+          {showAddAddress && (
+            <AddressModal
+              onClose={() => setShowAddAddress(false)}
+              onSubmit={handleAddAddress}
+            />
+          )}
+          {editingAddress && (
+            <AddressModal
+              address={editingAddress}
+              onClose={() => setEditingAddress(null)}
+              onSubmit={(data) => handleEditAddress(editingAddress._id, data)}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}

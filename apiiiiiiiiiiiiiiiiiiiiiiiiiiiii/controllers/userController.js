@@ -6,7 +6,9 @@ const Farmer = require('../models/Farmer'); // Import the Farmer model
 const customizeUserResponse = (user) => {
   return {
     basicDetails: {
+      email: user.basicDetails.authentication.email,
       profile: user.basicDetails.profile,
+      userRole: user.basicDetails.userRole,
     },
     addresses: user.addresses,
     // Handle orders for users

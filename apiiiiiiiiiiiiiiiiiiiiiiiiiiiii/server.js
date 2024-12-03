@@ -1,4 +1,8 @@
 require('dotenv').config();
+console.log('Environment check:', {
+  mailgunApiPresent: !!process.env.mailgun_api,
+  nodeEnv: process.env.NODE_ENV
+});
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -85,9 +89,8 @@ app.use('/api/companies', companyRoutes);
 
 // File upload routes
 app.use('/api/upload', uploadRoutes);
-app.use('/api', emailRoutes);
 app.use('/api/trades', tradeRoutes);
-app.use('/api', otpRoutes);
+app.use('/api/otp', otpRoutes);
 
 
 // // Specific route for farmer selfie upload

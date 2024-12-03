@@ -1,25 +1,22 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use environment variable in production
+const JWT_SECRET = process.env.JWT_SECRET;
 
-function auth(req, res, next) {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Access denied. No token provided.' });
-  }
-  
+module.exports = (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const decodedToken = jwt.verify(token, JWT_SECRET);
     req.user = {
-      userId: decoded.userId,
-      role: decoded.role,
-      collection: decoded.collection
+      userId: decodedToken.userId,
+      userRole: decodedToken.userRole
     };
     next();
   } catch (error) {
-    res.status(400).json({ error: 'Invalid token.' });
+    res.status(401).json({ message: 'Invalid or expired token' });
   }
-}
-
-module.exports = auth;
+};

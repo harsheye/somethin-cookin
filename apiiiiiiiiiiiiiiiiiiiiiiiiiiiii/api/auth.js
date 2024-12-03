@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const authController = require('../controllers/authController');
 
 const router = express.Router();
 const JWT_SECRET = 'your-secret-key'; // Use environment variable in production
@@ -45,7 +46,7 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).select('+password');
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -55,12 +56,29 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
+    const token = jwt.sign(
+      { 
+        userId: user._id, 
+        userRole: user.basicDetails.userRole 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '1h' }
+    );
+    
+    const userData = user.toObject();
+    delete userData.password;
+    
+    res.json({ 
+      token,
+      userRole: user.basicDetails.userRole,
+      user: userData
+    });
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ error: 'An error occurred while logging in' });
   }
 });
+
+router.post('/send-verification', authController.sendVerificationEmail);
 
 module.exports = router;

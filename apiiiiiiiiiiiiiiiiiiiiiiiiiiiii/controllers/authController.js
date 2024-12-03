@@ -5,8 +5,35 @@ const Farmer = require('../models/Farmer');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const { deleteFiles } = require('./fileuploadController');
 const mongoose = require('mongoose');
+const sendEmail = require('./component/sendEmail');
 
-// Existing register and login functions...
+// Create a Map to store OTPs
+const otpStore = new Map();
+
+// Add this function to generate HTML email template
+const generateEmailTemplate = (otp) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        .container { padding: 20px; font-family: Arial, sans-serif; }
+        .code { font-size: 32px; font-weight: bold; color: #22c55e; }
+        .message { margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h2>Email Verification</h2>
+        <div class="message">Your verification code is:</div>
+        <div class="code">${otp}</div>
+        <p>This code will expire in 2 minutes.</p>
+        <p>If you didn't request this code, please ignore this email.</p>
+      </div>
+    </body>
+    </html>
+  `;
+};
 
 exports.changePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -278,5 +305,99 @@ exports.login = async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Failed to login' });
+  }
+};
+
+exports.sendVerificationEmail = async (req, res) => {
+  try {
+    const { email, type } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
+    }
+
+    // For farmer signup, just generate and return the code
+    if (type === 'farmer') {
+      const code = Math.floor(1000 + Math.random() * 9000).toString();
+      otpStore.set(email, {
+        otp: code,
+        expiry: Date.now() + 120000
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Verification code generated',
+        code: code // Only in development
+      });
+    }
+
+    // For customer signup, send email
+    const { code } = await sendEmail(email);
+    
+    otpStore.set(email, {
+      otp: code,
+      expiry: Date.now() + 120000
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent successfully'
+    });
+
+  } catch (error) {
+    console.error('Error in verification process:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to process verification request'
+    });
+  }
+};
+
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    console.log('Verifying OTP for:', email, 'Code:', otp);
+
+    const storedData = otpStore.get(email);
+    
+    if (!storedData) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'OTP expired or not found' 
+      });
+    }
+
+    if (storedData.otp !== otp) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid OTP' 
+      });
+    }
+
+    if (Date.now() > storedData.expiry) {
+      otpStore.delete(email);
+      return res.status(400).json({ 
+        success: false,
+        message: 'OTP expired' 
+      });
+    }
+
+    // Clear OTP after successful verification
+    otpStore.delete(email);
+
+    res.json({ 
+      success: true,
+      message: 'Email verified successfully' 
+    });
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to verify email',
+      error: error.message 
+    });
   }
 };

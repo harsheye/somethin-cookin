@@ -42,27 +42,34 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5009/api/farmer/orders', {
+    fetchOrders();
+  }, [searchTerm, statusFilter, sortBy]);
+
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const response = await fetch(
+        `http://localhost:5009/api/farmer/orders?` +
+        `search=${searchTerm}&` +
+        `status=${statusFilter}&` +
+        `sort=${sortBy}`,
+        {
           headers: {
             'Authorization': `Bearer ${token}`
           }
-        });
+        }
+      );
 
-        if (!response.ok) throw new Error('Failed to fetch orders');
+      if (!response.ok) throw new Error('Failed to fetch orders');
 
-        const data = await response.json();
-        setOrders(data);
-      } catch (error) {
-        console.error('Error:', error);
-        toast.error('Failed to load orders');
-      }
-    };
-
-    fetchOrders();
-  }, []);
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      toast.error('Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {

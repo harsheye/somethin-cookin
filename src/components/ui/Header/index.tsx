@@ -73,7 +73,7 @@ export const Header = () => {
               <FaStore /> Marketplace
             </motion.button>
 
-            {isAuthenticated && (userRole === 'farmer' || userRole === 'company') && (
+            {isAuthenticated && userRole === 'company' && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -81,6 +81,17 @@ export const Header = () => {
                 className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
               >
                 <FaExchangeAlt /> Trades
+              </motion.button>
+            )}
+
+            {isAuthenticated && userRole === 'farmer' && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/farmer-dashboard')}
+                className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
+              >
+                <FaTachometerAlt /> Dashboard
               </motion.button>
             )}
           </nav>
