@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUser, FaLock, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCheck, FaSeedling } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
+import FloatingHeader from '@/components/FloatingHeader';
 
 interface FormData {
   username: string;
@@ -1113,6 +1114,7 @@ const FarmerSignup: React.FC = () => {
           </AnimatePresence>
         </div>
       </div>
+      <FloatingHeader />
     </div>
   );
 };

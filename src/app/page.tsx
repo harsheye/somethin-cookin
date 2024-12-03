@@ -1,78 +1,163 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { FaShoppingBasket, FaTractor, FaChartLine, FaUsers } from 'react-icons/fa';
-import { Header } from '@/components/ui/Header';
-import Image from 'next/image';
-import logoSvg from './logo.svg';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { TypeAnimation } from 'react-type-animation';
+import { FaTractor, FaLeaf, FaHandshake, FaChartLine, FaArrowRight } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
+// import FloatingHeader from '@/components/FloatingHeader';
 
-const themes = [
-  { primary: 'from-green-100 to-green-300', secondary: 'bg-green-500' },
-  { primary: 'from-blue-100 to-blue-300', secondary: 'bg-blue-500' },
-  { primary: 'from-purple-100 to-purple-300', secondary: 'bg-purple-500' },
-];
+const HomePage = () => {
+  const router = useRouter();
 
-const HomePage: React.FC = () => {
-  const [currentTheme, setCurrentTheme] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTheme((prev) => (prev + 1) % themes.length);
-    }, 10000); // Change theme every 10 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  const features = [
+    {
+      icon: FaTractor,
+      title: "Modern Farming",
+      description: "Access cutting-edge agricultural technology",
+      color: "from-green-400 to-green-600"
+    },
+    {
+      icon: FaLeaf,
+      title: "Sustainable Growth",
+      description: "Eco-friendly farming practices",
+      color: "from-emerald-400 to-emerald-600"
+    },
+    {
+      icon: FaHandshake,
+      title: "Direct Trading",
+      description: "Connect directly with buyers",
+      color: "from-blue-400 to-blue-600"
+    },
+    {
+      icon: FaChartLine,
+      title: "Market Insights",
+      description: "Real-time market analytics",
+      color: "from-purple-400 to-purple-600"
+    }
+  ];
 
   return (
-    <div className={`flex flex-col min-h-screen bg-gradient-to-b ${themes[currentTheme].primary} transition-all duration-5000`}>
-      <Header isLoggedIn={false} onLogout={() => {}} />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <Image
-            src={logoSvg}
-            alt="Swastik Logo"
-            width={150}
-            height={150}
-            className="mx-auto"
-          />
-        </div>
-        <h1 className="text-5xl font-bold text-center mb-12 text-gray-800 animate-fade-in-down">
-          Welcome to Swastik
-        </h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <Link href="/marketplace" className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in">
-            <FaShoppingBasket className={`text-4xl ${themes[currentTheme].secondary} mb-4`} />
-            <h2 className="text-2xl font-semibold mb-2">Shop in Marketplace</h2>
-            <p className="text-gray-600">Browse and buy fresh produce directly from farmers.</p>
-          </Link>
-          <Link href="/bulk-orders" className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in">
-            <FaUsers className={`text-4xl ${themes[currentTheme].secondary} mb-4`} />
-            <h2 className="text-2xl font-semibold mb-2">Bulk Orders for Businesses</h2>
-            <p className="text-gray-600">Place large orders for your business needs.</p>
-          </Link>
-          <Link href="/farmer-dashboard" className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in">
-            <FaTractor className={`text-4xl ${themes[currentTheme].secondary} mb-4`} />
-            <h2 className="text-2xl font-semibold mb-2">Farmer Dashboard</h2>
-            <p className="text-gray-600">Manage your products and orders as a farmer.</p>
-          </Link>
-          <Link href="/mandi-prices" className="bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in">
-            <FaChartLine className={`text-4xl ${themes[currentTheme].secondary} mb-4`} />
-            <h2 className="text-2xl font-semibold mb-2">Mandi Prices</h2>
-            <p className="text-gray-600">Check real-time prices from various mandis.</p>
-          </Link>
-        </div>
-
-        <div className="text-center animate-fade-in">
-          <h2 className="text-3xl font-bold mb-4">About Swastik</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto animate-typing">
-            Swastik is a platform connecting farmers directly with consumers and businesses. 
-            We aim to create a fair and transparent marketplace for agricultural produce, 
-            benefiting both farmers and buyers.
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center z-10 px-4"
+        >
+          <h1 className="text-5xl md:text-7xl font-bold text-green-800 mb-6">
+            Welcome to{' '}
+            <TypeAnimation
+              sequence={[
+                'Swastik',
+                2000,
+                'The Future',
+                2000,
+                'Innovation',
+                2000,
+                'Agriculture',
+                2000,
+              ]}
+              wrapper="span"
+              repeat={Infinity}
+              className="text-green-600"
+            />
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Revolutionizing farming through technology and direct market access
           </p>
+          <div className="flex gap-4 justify-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push('/auth/farmer/signup')}
+              className="bg-green-500 text-white px-8 py-3 rounded-full hover:bg-green-600 transition-all flex items-center gap-2"
+            >
+              Get Started <FaArrowRight />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push('/marketplace')}
+              className="bg-white text-green-600 px-8 py-3 rounded-full hover:bg-green-50 transition-all border-2 border-green-500"
+            >
+              Explore Market
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* Animated background elements */}
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 180, 360],
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute inset-0 z-0"
+        >
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-green-200 rounded-full opacity-20 blur-3xl" />
+          <div className="absolute bottom-1/3 right-1/3 w-48 h-48 bg-blue-200 rounded-full opacity-20 blur-3xl" />
+        </motion.div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl font-bold text-center text-green-800 mb-16"
+          >
+            Why Choose Swastik?
+          </motion.h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.2 }}
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                className={`p-6 rounded-xl bg-gradient-to-br ${feature.color} text-white transform transition-all duration-300 hover:shadow-xl`}
+              >
+                <feature.icon className="text-4xl mb-4" />
+                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <p className="text-sm opacity-90">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 bg-white/50 backdrop-blur-lg">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { number: "10K+", label: "Farmers" },
+              { number: "₹50M+", label: "Trading Volume" },
+              { number: "100+", label: "Markets Connected" },
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.5 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <h3 className="text-5xl font-bold text-green-600 mb-2">{stat.number}</h3>
+                <p className="text-gray-600">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* <FloatingHeader /> */}
     </div>
   );
 };

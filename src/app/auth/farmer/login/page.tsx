@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { FaEnvelope, FaLock, FaSeedling, FaArrowRight, FaTractor, FaHandHoldingUsd, FaUsers, FaChartLine } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { TypeAnimation } from 'react-type-animation';
+import FloatingHeader from '@/components/FloatingHeader';
 
 const FarmerLoginPage: React.FC = () => {
   const router = useRouter();
@@ -38,7 +39,7 @@ const FarmerLoginPage: React.FC = () => {
       const data = await response.json();
       const { token, userRole } = data;
 
-      // Store token based on remember me
+      // Store token and role in both localStorage and cookies
       if (formData.rememberMe) {
         localStorage.setItem('token', token);
         localStorage.setItem('userRole', userRole);
@@ -47,10 +48,18 @@ const FarmerLoginPage: React.FC = () => {
         sessionStorage.setItem('userRole', userRole);
       }
 
+      // Set cookies
+      document.cookie = `token=${token}; path=/`;
+      document.cookie = `userRole=${userRole}; path=/`;
+
       toast.success('Welcome back!', { id: 'login' });
 
       // Redirect based on user role
-      router.push(userRole === 'farmer' ? '/farmer-dashboard' : '/marketplace');
+      if (userRole === 'farmer') {
+        router.push('/farmer-dashboard');
+      } else {
+        router.push('/marketplace');
+      }
     } catch (error) {
       toast.error('Invalid username or password', { id: 'login' });
     } finally {
@@ -248,6 +257,7 @@ const FarmerLoginPage: React.FC = () => {
           </p>
         </motion.div>
       </div>
+      <FloatingHeader />
     </div>
   );
 };

@@ -1,7 +1,5 @@
 'use client';
 
-import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader';
-
 export default function MarketplaceLayout({
   children,
 }: {
@@ -9,7 +7,6 @@ export default function MarketplaceLayout({
 }) {
   return (
     <div>
-      <MarketplaceHeader />
       {children}
     </div>
   );

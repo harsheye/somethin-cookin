@@ -76,10 +76,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/farmer', (req, res, next) => {
-  console.log('Farmer route accessed:', req.method, req.path);
-  farmerRoutes(req, res, next);
-});
+app.use('/api/farmer',farmerRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/useraddress', addressRoutes);
