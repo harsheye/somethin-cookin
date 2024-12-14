@@ -9,6 +9,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import AddProductModal from '@/components/modals/AddProductModal';
+import Link from 'next/link';
 
 interface Product {
   id: string;
@@ -140,15 +141,13 @@ const FarmerProducts = () => {
         </div>
 
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">My Products</h1>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowAddModal(true)}
-            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+          <h1 className="text-3xl font-bold text-gray-900">My Products</h1>
+          <Link
+            href="/farmer/products/add"
+            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
           >
-            <FaPlus className="inline mr-2" /> Add Product
-          </motion.button>
+            <FaPlus /> Add New Product
+          </Link>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 mb-8">
@@ -227,14 +226,12 @@ const FarmerProducts = () => {
                   Clear Filters
                 </motion.button>
               ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600"
+                <Link
+                  href="/farmer/products/add"
+                  className="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   Add Product
-                </motion.button>
+                </Link>
               )}
             </motion.div>
           </div>

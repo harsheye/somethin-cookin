@@ -76,3 +76,17 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes border-beam {
+  0% {
+    border-image-source: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+  }
+  100% {
+    border-image-source: linear-gradient(45deg, #ff0000, #ff00c8, #7a00ff, #002bff, #00ffd5, #48ff00, #fffb00, #ff7300, #ff0000);
+  }
+}
+
+.animate-border-beam {
+  animation: border-beam 4s linear infinite;
+  border-image-slice: 1;
+}

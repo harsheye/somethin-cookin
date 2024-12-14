@@ -561,7 +561,7 @@ const FarmerSignup: React.FC = () => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     setGeneratedOTP(otp); // Store it in state to display
     setEmailSent(true);
-    setOtpTimer(120);
+    startEmailTimer();
     toast.success('Verification code generated');
   };
 
@@ -654,96 +654,98 @@ const FarmerSignup: React.FC = () => {
               >
                 <div className="space-y-4">
                   {/* Email Input and OTP Section */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <FaEnvelope className="absolute top-3 left-3 text-green-500" />
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        value={formData.email}
-                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        className="pl-10 w-full p-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Mobile Number Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mobile Number
-                    </label>
-                    <div className="relative">
-                      <FaPhone className="absolute top-3 left-3 text-green-500" />
-                      <input
-                        type="tel"
-                        name="mobileNo"
-                        placeholder="Enter mobile number"
-                        value={formData.mobileNo}
-                        onChange={(e) => setFormData(prev => ({ ...prev, mobileNo: e.target.value }))}
-                        className="pl-10 w-full p-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        required
-                        pattern="[0-9]{10}"
-                        maxLength={10}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Send Verification Button */}
-                  {!emailSent && (
-                    <button
-                      type="button"
-                      onClick={handleSendBothOTPs}
-                      disabled={isLoading || !formData.email || !formData.mobileNo}
-                      className="mt-2 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors duration-300 disabled:opacity-50"
-                    >
-                      {isLoading ? 'Sending...' : 'Send Verification Code'}
-                    </button>
-                  )}
-
-                  {/* Email OTP Input - Show when email is sent */}
-                  {emailSent && (
-                    <div className="mt-4">
+                  <div className="space-y-4">
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Verification Code
+                        Email Address
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <FaEnvelope className="absolute top-3 left-3 text-green-500" />
                         <input
-                          type="text"
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value)}
-                          placeholder="Enter 6-digit code"
-                          className="flex-1 p-2 border border-green-200 rounded-lg"
-                          maxLength={6}
+                          type="email"
+                          name="email"
+                          placeholder="Enter your email"
+                          value={formData.email}
+                          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                          className="pl-10 w-full p-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          required
                         />
-                        {emailTimer > 0 ? (
-                          <span className="text-sm text-gray-500 w-20">
-                            {emailTimer}s
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleEmailSubmit}
-                            className="text-green-500 hover:text-green-600 text-sm w-20"
-                          >
-                            Resend
-                          </button>
-                        )}
                       </div>
+                    </div>
+
+                    {/* Mobile Number Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Mobile Number
+                      </label>
+                      <div className="relative">
+                        <FaPhone className="absolute top-3 left-3 text-green-500" />
+                        <input
+                          type="tel"
+                          name="mobileNo"
+                          placeholder="Enter mobile number"
+                          value={formData.mobileNo}
+                          onChange={(e) => setFormData(prev => ({ ...prev, mobileNo: e.target.value }))}
+                          className="pl-10 w-full p-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          required
+                          pattern="[0-9]{10}"
+                          maxLength={10}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Send Verification Button */}
+                    {!emailSent && (
                       <button
                         type="button"
-                        onClick={handleVerifyCode}
-                        disabled={!verificationCode || verificationCode.length !== 6}
+                        onClick={handleSendVerificationCode}
+                        disabled={!formData.email || !formData.mobileNo || formData.mobileNo.length !== 10}
                         className="mt-2 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors duration-300 disabled:opacity-50"
                       >
-                        Verify & Continue
+                        Generate Verification Code
                       </button>
-                    </div>
-                  )}
+                    )}
+
+                    {/* Display generated OTP and verification input */}
+                    {emailSent && (
+                      <div className="mt-4">
+                        <div className="bg-green-50 p-3 rounded-lg mb-3">
+                          <p className="text-green-700">Your verification code is: <span className="font-bold">{generatedOTP}</span></p>
+                          <p className="text-sm text-green-600 mt-1">
+                            Use this code to verify both your email and mobile number
+                          </p>
+                        </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Enter Verification Code
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                            placeholder="Enter 4-digit code"
+                            className="flex-1 p-2 border border-green-200 rounded-lg"
+                            maxLength={4}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (verificationCode === generatedOTP) {
+                              toast.success('Email and mobile verification successful!');
+                              setStep(2);
+                            } else {
+                              toast.error('Invalid verification code');
+                            }
+                          }}
+                          disabled={!verificationCode || verificationCode.length !== 4}
+                          className="mt-2 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors duration-300 disabled:opacity-50"
+                        >
+                          Verify & Continue
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </motion.form>
             )}

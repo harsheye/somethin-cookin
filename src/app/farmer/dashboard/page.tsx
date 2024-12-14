@@ -1,32 +1,33 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { FaBars, FaTimes, FaPlus } from 'react-icons/fa';
-import AddProductModal from '@/components/AddProductModal';
-import ProductsList from '@/components/ProductsList';
-import OrdersList from '@/components/OrdersList';
-import { getFarmerProducts, getFarmerOrders } from '@/lib/api';
-import MandiPrice from '@/components/MandiPrice';
+import { 
+  FaBoxOpen, FaChartLine, FaPlus, FaExchangeAlt,
+  FaShoppingCart, FaRobot, FaStore, FaSeedling
+} from 'react-icons/fa';
+import { getFarmerProducts, getFarmerOrders, getMandiPrices } from '@/lib/api';
+import SalesChart from '@/components/SalesChart';
 import AIAssistant from '@/components/AIAssistant';
+import MandiPrice from '@/components/MandiPrice';
+import PageWrapper from '@/components/layouts/PageWrapper';
 
 const FarmerDashboard: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-  const router = useRouter();
+  const [trades, setTrades] = useState([]);
+  const [mandiPrices, setMandiPrices] = useState([]);
+  const [salesData, setSalesData] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/auth/farmer/login');
-    } else {
-      fetchProducts();
-      fetchOrders();
-    }
-  }, [router]);
+    fetchProducts();
+    fetchOrders();
+    fetchTrades();
+    fetchMandiPrices();
+    fetchSalesData();
+  }, []);
 
   const fetchProducts = async () => {
     const fetchedProducts = await getFarmerProducts();
@@ -38,74 +39,147 @@ const FarmerDashboard: React.FC = () => {
     setOrders(fetchedOrders);
   };
 
+  const fetchTrades = async () => {
+    try {
+      const response = await fetch('http://localhost:5009/api/trades/farmer', {
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch trades');
+      const data = await response.json();
+      setTrades(data);
+    } catch (error) {
+      console.error('Failed to fetch trades:', error);
+    }
+  };
+
+  const fetchMandiPrices = async () => {
+    try {
+      const prices = await getMandiPrices();
+      setMandiPrices(prices);
+    } catch (error) {
+      console.error('Failed to fetch mandi prices:', error);
+    }
+  };
+
+  const fetchSalesData = async () => {
+    // Sample data for now
+    const sampleData = [
+      { date: '2024-01', sales: 4000 },
+      { date: '2024-02', sales: 3000 },
+      { date: '2024-03', sales: 2000 },
+      { date: '2024-04', sales: 2780 },
+      { date: '2024-05', sales: 1890 },
+      { date: '2024-06', sales: 2390 },
+    ];
+    setSalesData(sampleData);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-green-600 text-white p-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <Image src="/logo.png" alt="Logo" width={50} height={50} />
-          <h1 className="ml-4 text-2xl font-bold">Meri Mandi Meraa Kisan</h1>
-        </div>
-        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden">
-          {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-        </button>
-      </header>
-
-      <nav className={`bg-green-500 p-4 ${isMenuOpen ? 'block' : 'hidden'} md:block`}>
-        <ul className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
-          <li><a href="/farmer/profile" className="text-white hover:text-green-200">Profile</a></li>
-          <li><a href="/farmer/cart" className="text-white hover:text-green-200">Cart</a></li>
-          <li><button onClick={() => {
-            localStorage.removeItem('token');
-            router.push('/');
-          }} className="text-white hover:text-green-200">Logout</button></li>
-        </ul>
-      </nav>
-
-      <main className="container mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-          <button
-            onClick={() => setIsAddProductModalOpen(true)}
-            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors duration-300 flex items-center"
+    <PageWrapper>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Quick Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => router.push('/farmer/products/add')}
+            className="flex-1 bg-green-500 text-white p-4 rounded-lg shadow-md flex items-center justify-center gap-2 hover:bg-green-600 transition-colors"
           >
-            <FaPlus className="mr-2" /> Add Product
-          </button>
+            <FaPlus className="text-xl" />
+            <span className="text-lg font-medium">Add New Product</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => router.push('/farmer/trades/create')}
+            className="flex-1 bg-purple-500 text-white p-4 rounded-lg shadow-md flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors"
+          >
+            <FaSeedling className="text-xl" />
+            <span className="text-lg font-medium">Create New Trade</span>
+          </motion.button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex mb-4">
-            <button
-              onClick={() => setActiveTab('products')}
-              className={`mr-4 ${activeTab === 'products' ? 'text-green-500 font-semibold' : ''}`}
-            >
-              Products
-            </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`${activeTab === 'orders' ? 'text-green-500 font-semibold' : ''}`}
-            >
-              Orders
-            </button>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            onClick={() => router.push('/farmer/products')}
+            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white shadow-lg cursor-pointer"
+          >
+            <div className="flex justify-between items-center">
+              <FaBoxOpen className="text-3xl" />
+              <span className="text-lg">Products</span>
+            </div>
+            <div className="text-3xl font-bold mt-4">{products.length}</div>
+            <div className="text-sm mt-2">View All Products →</div>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            onClick={() => router.push('/farmer/orders')}
+            className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 text-white shadow-lg cursor-pointer"
+          >
+            <div className="flex justify-between items-center">
+              <FaShoppingCart className="text-3xl" />
+              <span className="text-lg">Orders</span>
+            </div>
+            <div className="text-3xl font-bold mt-4">{orders.length}</div>
+            <div className="text-sm mt-2">View All Orders →</div>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            onClick={() => router.push('/farmer/trades')}
+            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 text-white shadow-lg cursor-pointer"
+          >
+            <div className="flex justify-between items-center">
+              <FaExchangeAlt className="text-3xl" />
+              <span className="text-lg">Trades</span>
+            </div>
+            <div className="text-3xl font-bold mt-4">{trades.length}</div>
+            <div className="text-sm mt-2">View All Trades →</div>
+          </motion.div>
+        </div>
+
+        {/* Mandi Prices */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center">
+            <FaStore className="mr-2" /> Latest Mandi Prices
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {mandiPrices.slice(0, 3).map((price, index) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-lg">{price.commodity}</h3>
+                <div className="text-gray-600">{price.market}</div>
+                <div className="text-2xl font-bold text-green-600 mt-2">
+                  ₹{price.modal_price}/{price.unit}
+                </div>
+              </div>
+            ))}
           </div>
-
-          {activeTab === 'products' ? (
-            <ProductsList products={products} onProductUpdate={fetchProducts} />
-          ) : (
-            <OrdersList orders={orders} />
-          )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 w-full">
-          <h2 className="text-2xl font-bold mb-4">Mandi Real-Time Prices</h2>
-          <MandiPrice />
+        {/* Sales Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+          <h2 className="text-xl font-bold mb-4">Sales Overview</h2>
+          <SalesChart data={salesData} />
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 w-full">
-          <h2 className="text-2xl font-bold mb-4">AI Assistant</h2>
-          <AIAssistant />
+        {/* Bottom Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold mb-4">Market Prices</h2>
+            <MandiPrice />
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold mb-4">AI Assistant</h2>
+            <AIAssistant />
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </PageWrapper>
   );
 };
 

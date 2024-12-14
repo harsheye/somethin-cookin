@@ -1,1 +1,1 @@
-// Delete this file as we're using verificationController instead
+// This file is deprecated. Email functionality moved to verificationController.js

@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Company = require('../models/Company'); // Ensure this path is correct
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -21,7 +21,7 @@ exports.registerCompany = async (req, res) => {
     }
 
     // Hash the password before saving it
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptjs.hash(password, 10);
 
     // Create a new company instance with hashed password
     const company = new Company({
@@ -59,7 +59,7 @@ exports.loginCompany = async (req, res) => {
     }
 
     // Compare password with stored hash
-    const isMatch = await bcrypt.compare(password, company.password);
+    const isMatch = await bcryptjs.compare(password, company.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }

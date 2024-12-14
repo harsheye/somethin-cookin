@@ -33,7 +33,7 @@ interface FormData {
 }
 
 const tabs: { id: TabType; label: string; icon: any }[] = [
-  { id: 'account', label: 'Email Verification', icon: FaEnvelope },
+  { id: 'account', label: 'Account Setup', icon: FaEnvelope },
   { id: 'password', label: 'Set Password', icon: FaLock },
   { id: 'personal', label: 'Personal Info', icon: FaUser },
   { id: 'address', label: 'Address', icon: FaMapMarkerAlt }
@@ -45,14 +45,12 @@ const floatingIcons = [FaShoppingBasket, FaLeaf, FaHeart, FaSeedling];
 interface SignupProgress {
   currentTab: TabType;
   formData: FormData;
-  emailVerified: boolean;
 }
 
 export default function CustomerSignupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('account');
-  const [verificationCode, setVerificationCode] = useState('');
   const [formData, setFormData] = useState<FormData>({
     username: '',
     password: '',
@@ -69,16 +67,6 @@ export default function CustomerSignupPage() {
       zipCode: ''
     }
   });
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(0);
-  const [emailOtp, setEmailOtp] = useState('');
-
-  useEffect(() => {
-    if (otpTimer > 0) {
-      const timer = setTimeout(() => setOtpTimer(otpTimer - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [otpTimer]);
 
   // Load saved progress on mount
   useEffect(() => {
@@ -87,7 +75,6 @@ export default function CustomerSignupPage() {
       const progress: SignupProgress = JSON.parse(savedProgress);
       setActiveTab(progress.currentTab);
       setFormData(progress.formData);
-      setEmailVerified(progress.emailVerified);
     }
   }, []);
 
@@ -96,10 +83,9 @@ export default function CustomerSignupPage() {
     const progress: SignupProgress = {
       currentTab: activeTab,
       formData,
-      emailVerified
     };
     localStorage.setItem('signupProgress', JSON.stringify(progress));
-  }, [activeTab, formData, emailVerified]);
+  }, [activeTab, formData]);
 
   const handleNextTab = () => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
@@ -119,49 +105,17 @@ export default function CustomerSignupPage() {
     e.preventDefault();
 
     if (activeTab === 'account') {
-      if (otpTimer > 0 && !emailVerified) {
-        try {
-          const response = await fetch('http://localhost:5009/api/auth/verify-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              email: formData.email,
-              otp: emailOtp
-            })
-          });
-
-          const data = await response.json();
-          
-          if (!data.success) {
-            throw new Error(data.message);
-          }
-
-          setEmailVerified(true);
-          toast.success('Email verified successfully!');
-          handleNextTab();
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : 'Failed to verify email');
-        }
-      } else if (!otpTimer) {
-        try {
-          const response = await fetch('http://localhost:5009/api/auth/send-verification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: formData.email })
-          });
-
-          const data = await response.json();
-          
-          if (!data.success) {
-            throw new Error(data.message);
-          }
-
-          setOtpTimer(120);
-          toast.success('Verification code sent to your email');
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : 'Failed to send verification code');
-        }
+      if (!formData.email) {
+        toast.error('Please enter your email address');
+        return;
       }
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+      handleNextTab();
       return;
     }
 
@@ -212,119 +166,48 @@ export default function CustomerSignupPage() {
           throw new Error(error.message || 'Registration failed');
         }
 
-        // Show success notification
-        toast.success('Registration successful! Redirecting to login...', {
-          duration: 5000, // Show for 5 seconds
-          position: 'top-center',
-        });
+        toast.success(
+          <div className="flex flex-col">
+            <span className="font-medium">Welcome to Swastik!</span>
+            <span className="text-sm">Your farming journey begins now</span>
+            <span className="text-sm mt-1">Redirecting to login in <span className="font-bold">3</span> seconds...</span>
+          </div>,
+          {
+            id: 'registration',
+            duration: 3000,
+            icon: <FaSeedling className="text-green-600 text-xl" />
+          }
+        );
 
         // Clear saved progress
-        localStorage.removeItem('signupProgress');
+        clearSavedProgress();
 
-        // Show a countdown notification
-        let countdown = 5;
+        // Create a visual countdown
+        let count = 3;
         const countdownInterval = setInterval(() => {
-          countdown--;
-          if (countdown > 0) {
-            toast.loading(`Redirecting in ${countdown} seconds...`, {
-              id: 'redirect-countdown'
-            });
-          } else {
+          count--;
+          const toastElement = document.querySelector('[data-id="registration"]');
+          if (toastElement) {
+            const countElement = toastElement.querySelector('.mt-1 .font-bold');
+            if (countElement) {
+              countElement.textContent = count.toString();
+            }
+          }
+          if (count === 0) {
             clearInterval(countdownInterval);
-            toast.dismiss('redirect-countdown');
-            router.push('/auth/login');
           }
         }, 1000);
 
+        // Wait for 3 seconds before redirecting
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // Redirect to login
+        router.push('/auth/farmer/login');
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Registration failed');
+        toast.error('Registration failed');
       } finally {
         setLoading(false);
       }
-    }
-  };
-
-  const handleSendOTP = async () => {
-    try {
-      const response = await fetch('http://localhost:5009/api/auth/send-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send OTP');
-      }
-      
-      toast.success('OTP sent to your email');
-      setOtpTimer(120); // 2 minutes
-    } catch (error) {
-      console.error('Error sending OTP:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to send OTP');
-    }
-  };
-
-  const verifyOTP = async () => {
-    try {
-      const response = await fetch('http://localhost:5009/api/auth/verify-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: formData.email,
-          otp: emailOtp
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Invalid OTP');
-      }
-      
-      setEmailVerified(true);
-      toast.success('Email verified successfully!');
-      setActiveTab('password');
-    } catch (error) {
-      console.error('Error verifying OTP:', error);
-      toast.error(error instanceof Error ? error.message : 'Invalid OTP');
-    }
-  };
-
-  // Automatically send OTP when email is entered and next is clicked
-  const handleEmailNext = async () => {
-    if (!formData.email) {
-      toast.error('Please enter your email address');
-      return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:5009/api/auth/send-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: formData.email,
-          type: 'signup' // Add type to differentiate signup OTP
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to send verification code');
-      }
-
-      toast.success('Verification code sent to your email');
-      setOtpTimer(120); // 2 minutes
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to send verification code');
     }
   };
 
@@ -333,42 +216,23 @@ export default function CustomerSignupPage() {
       case 'account':
         return (
           <motion.div
-            key="email-verification"
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -50, opacity: 0 }}
+            key="account"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
             className="space-y-4"
           >
             <div className="relative">
-              <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="Email Address"
-                className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 required
               />
             </div>
-
-            {otpTimer > 0 && (
-              <div className="space-y-4">
-                <div className="relative">
-                  <FaShieldAlt className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    value={emailOtp}
-                    onChange={(e) => setEmailOtp(e.target.value)}
-                    placeholder="Enter OTP"
-                    className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
-                    required
-                  />
-                </div>
-                <div className="text-center text-sm text-gray-500">
-                  Resend code in {Math.floor(otpTimer / 60)}:{(otpTimer % 60).toString().padStart(2, '0')}
-                </div>
-              </div>
-            )}
           </motion.div>
         );
 
@@ -537,23 +401,9 @@ export default function CustomerSignupPage() {
     }
 
     if (activeTab === 'account') {
-      if (otpTimer > 0) {
-        if (emailVerified) {
-          return (
-            <>
-              Continue <FaArrowRight className="text-sm" />
-            </>
-          );
-        }
-        return (
-          <>
-            Verify OTP <FaArrowRight className="text-sm" />
-          </>
-        );
-      }
       return (
         <>
-          Send Verification Code <FaArrowRight className="text-sm" />
+          Next Step <FaArrowRight />
         </>
       );
     }
@@ -671,13 +521,13 @@ export default function CustomerSignupPage() {
                   transition={{ delay: 0.2 }}
                 >
                   <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
-                    {activeTab === 'account' && 'Verify Your Email'}
+                    {activeTab === 'account' && 'Enter Your Email'}
                     {activeTab === 'password' && 'Secure Your Account'}
                     {activeTab === 'personal' && 'Tell Us About Yourself'}
                     {activeTab === 'address' && 'Where Should We Deliver?'}
                   </h1>
                   <p className="text-gray-600">
-                    {activeTab === 'account' && "We'll send you a verification code"}
+                    {activeTab === 'account' && 'Please provide your email address'}
                     {activeTab === 'password' && 'Choose a strong password'}
                     {activeTab === 'personal' && 'Help us personalize your experience'}
                     {activeTab === 'address' && 'Enter your delivery address'}
@@ -696,11 +546,9 @@ export default function CustomerSignupPage() {
                     type="submit"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    disabled={loading || (activeTab === 'account' && otpTimer > 0 && !emailOtp)}
+                    disabled={loading}
                     className={`px-8 py-3 rounded-lg flex items-center justify-center gap-2 ${
-                      loading || (activeTab === 'account' && otpTimer > 0 && !emailOtp)
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-green-500 text-white hover:bg-green-600'
+                      loading ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'
                     }`}
                   >
                     {getButtonText()}

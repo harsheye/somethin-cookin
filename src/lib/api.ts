@@ -20,19 +20,35 @@ function getToken(): string | null {
   return localStorage.getItem('token') || sessionStorage.getItem('token');
 }
 
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = getToken();
-  if (token) {
-    options.headers = {
+export async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  const token = sessionStorage.getItem('token');
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
       ...options.headers,
-      'Authorization': `Bearer ${token}`
-    };
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (response.status === 401) {
+    // Token expired or invalid
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('userRole');
+    window.location.href = '/auth/login'; // Force redirect to login
+    throw new Error('Session expired. Please login again.');
   }
-  const response = await fetch(url, options);
+
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Request failed with status: ${response.status}`);
   }
+
   return response;
 }
 
