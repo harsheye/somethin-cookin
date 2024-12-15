@@ -164,11 +164,10 @@ function Header() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                      isScrolled 
-                        ? 'bg-white/10 hover:bg-white/20' 
-                        : 'bg-white/10 hover:bg-white/20'
-                    }`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all 
+                      cursor-pointer border border-white/20 backdrop-blur-sm
+                      ${isScrolled ? 'bg-white/10 hover:bg-white/20' : 'bg-white/10 hover:bg-white/20'}
+                    `}
                   >
                     <FaUser className="text-lg text-white" />
                   </motion.div>
@@ -176,43 +175,120 @@ function Header() {
                   <AnimatePresence>
                     {isDropdownOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute right-0 mt-2 w-48 backdrop-blur-md rounded-xl shadow-lg py-1 z-50 bg-gradient-to-b from-green-600/95 to-green-700/95"
+                        initial={{ 
+                          opacity: 0, 
+                          scale: 0.95,
+                          y: -20,
+                          clipPath: 'circle(0% at 90% 0%)' 
+                        }}
+                        animate={{ 
+                          opacity: 1, 
+                          scale: 1,
+                          y: 0,
+                          clipPath: 'circle(140% at 90% 0%)' 
+                        }}
+                        exit={{ 
+                          opacity: 0, 
+                          scale: 0.95,
+                          y: -20,
+                          clipPath: 'circle(0% at 90% 0%)' 
+                        }}
+                        transition={{ 
+                          duration: 0.3,
+                          ease: "easeOut"
+                        }}
+                        className="absolute right-0 mt-4 w-64 overflow-hidden"
                         onMouseEnter={() => setIsDropdownOpen(true)}
                       >
-                        <Link
-                          href="/profile"
-                          className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
-                        >
-                          <FaUser className="text-green-200" /> Profile
-                        </Link>
-                        
-                        {userRole === 'farmer' && (
-                          <Link
-                            href="/farmer/trades"
-                            className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
-                          >
-                            <FaExchangeAlt className="text-green-200" /> Trades
-                          </Link>
-                        )}
-                        
-                        {userRole === 'customer' && (
-                          <Link
-                            href="/cart"
-                            className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
-                          >
-                            <FaShoppingCart className="text-green-200" /> Cart
-                          </Link>
-                        )}
-                        
-                        <button
-                          onClick={handleLogout}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-white/10 flex items-center gap-2 transition-colors"
-                        >
-                          <FaSignOutAlt className="text-red-300" /> Logout
-                        </button>
+                        {/* Glassmorphism container */}
+                        <div className="backdrop-blur-xl bg-gradient-to-b from-green-900/90 to-green-800/90 
+                          rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
+                          
+                          {/* User Info Section */}
+                          <div className="p-4 border-b border-white/10 bg-white/5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                                <FaUser className="text-xl text-white/80" />
+                              </div>
+                              <div>
+                                <div className="text-white font-medium">User Profile</div>
+                                <div className="text-sm text-white/60">{userRole}</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Menu Items */}
+                          <div className="p-2">
+                            <motion.div className="space-y-1">
+                              <Link
+                                href="/profile"
+                                className="flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white 
+                                  rounded-lg hover:bg-white/10 transition-all duration-300 group"
+                              >
+                                <motion.div
+                                  whileHover={{ rotate: 15 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <FaUser className="text-lg group-hover:text-green-400 transition-colors" />
+                                </motion.div>
+                                <span>Profile</span>
+                              </Link>
+
+                              {userRole === 'farmer' && (
+                                <Link
+                                  href="/farmer/trades"
+                                  className="flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white 
+                                    rounded-lg hover:bg-white/10 transition-all duration-300 group"
+                                >
+                                  <motion.div
+                                    whileHover={{ rotate: 15 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <FaExchangeAlt className="text-lg group-hover:text-green-400 transition-colors" />
+                                  </motion.div>
+                                  <span>Trades</span>
+                                </Link>
+                              )}
+
+                              {userRole === 'customer' && (
+                                <Link
+                                  href="/cart"
+                                  className="flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white 
+                                    rounded-lg hover:bg-white/10 transition-all duration-300 group"
+                                >
+                                  <motion.div
+                                    whileHover={{ rotate: 15 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <FaShoppingCart className="text-lg group-hover:text-green-400 transition-colors" />
+                                  </motion.div>
+                                  <span>Cart</span>
+                                </Link>
+                              )}
+                            </motion.div>
+
+                            {/* Logout Button */}
+                            <div className="mt-2 pt-2 border-t border-white/10">
+                              <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-3 px-4 py-3 w-full text-red-300/80 hover:text-red-300 
+                                  rounded-lg hover:bg-white/10 transition-all duration-300 group"
+                              >
+                                <motion.div
+                                  whileHover={{ rotate: 15 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <FaSignOutAlt className="text-lg group-hover:text-red-400 transition-colors" />
+                                </motion.div>
+                                <span>Logout</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Decorative blob */}
+                          <div className="absolute -top-20 -right-20 w-40 h-40 bg-green-500/20 rounded-full blur-3xl" />
+                          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl" />
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -378,32 +454,37 @@ function Header() {
                 {/* Navigation Links */}
                 <nav className="flex-1 p-8">
                   <div className="space-y-6">
-                    {[
-                      { href: '/marketplace', label: 'Marketplace' },
-                      ...(userRole === 'farmer' ? [
-                        { href: '/farmer/dashboard', label: 'Dashboard' },
-                        { href: '/trades', label: 'Trades' }
-                      ] : []),
-                      ...(userRole === 'customer' ? [
-                        { href: '/cart', label: 'Cart' }
-                      ] : [])
-                    ].map((link, index) => (
-                      <motion.div
-                        key={link.href}
-                        initial={{ x: -40, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.8 + (index * 0.15), duration: 0.8 }}
-                      >
-                        <Link
-                          href={link.href}
-                          onClick={() => setIsSidebarOpen(false)}
-                          className="block text-xl text-white/70 hover:text-white 
-                            pl-4 py-2 transition-all duration-500"
+                    {(() => {
+                      const navLinks = [
+                        { href: '/marketplace', label: 'Marketplace' },
+                        { href: '/profile', label: 'Profile' },
+                        ...(userRole === 'farmer' ? [
+                          { href: '/farmer/dashboard', label: 'Dashboard' },
+                          { href: '/trades', label: 'Trades' }
+                        ] : []),
+                        ...(userRole === 'customer' ? [
+                          { href: '/cart', label: 'Cart' }
+                        ] : [])
+                      ];
+
+                      return navLinks.map((link, index) => (
+                        <motion.div
+                          key={link.href}
+                          initial={{ x: -40, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.8 + (index * 0.15), duration: 0.8 }}
                         >
-                          {link.label}
-                        </Link>
-                      </motion.div>
-                    ))}
+                          <Link
+                            href={link.href}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="block text-xl text-white/70 hover:text-white 
+                              pl-4 py-2 transition-all duration-500"
+                          >
+                            {link.label}
+                          </Link>
+                        </motion.div>
+                      ));
+                    })()}
                   </div>
                 </nav>
 
