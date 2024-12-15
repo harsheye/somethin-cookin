@@ -79,27 +79,7 @@ const FarmerDashboard: React.FC = () => {
   return (
     <PageWrapper>
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Quick Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => router.push('/farmer/products/add')}
-            className="flex-1 bg-green-500 text-white p-4 rounded-lg shadow-md flex items-center justify-center gap-2 hover:bg-green-600 transition-colors"
-          >
-            <FaPlus className="text-xl" />
-            <span className="text-lg font-medium">Add New Product</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => router.push('/farmer/trades/create')}
-            className="flex-1 bg-purple-500 text-white p-4 rounded-lg shadow-md flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors"
-          >
-            <FaSeedling className="text-xl" />
-            <span className="text-lg font-medium">Create New Trade</span>
-          </motion.button>
-        </div>
+       
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -142,7 +122,27 @@ const FarmerDashboard: React.FC = () => {
             <div className="text-sm mt-2">View All Trades →</div>
           </motion.div>
         </div>
-
+         {/* Quick Action Buttons */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => router.push('/farmer/products/add')}
+            className="flex-1 bg-green-500 text-white p-4 rounded-lg shadow-md flex items-center justify-center gap-2 hover:bg-green-600 transition-colors"
+          >
+            <FaPlus className="text-xl" />
+            <span className="text-lg font-medium">Add New Product</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => router.push('/farmer/trades/create')}
+            className="flex-1 bg-purple-500 text-white p-4 rounded-lg shadow-md flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors"
+          >
+            <FaSeedling className="text-xl" />
+            <span className="text-lg font-medium">Create New Trade</span>
+          </motion.button>
+        </div>
         {/* Mandi Prices */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-bold mb-4 flex items-center">
