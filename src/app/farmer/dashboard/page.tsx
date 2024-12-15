@@ -12,14 +12,54 @@ import SalesChart from '@/components/SalesChart';
 import AIAssistant from '@/components/AIAssistant';
 import MandiPrice from '@/components/MandiPrice';
 import PageWrapper from '@/components/layouts/PageWrapper';
+import MandiPrices from '@/components/MandiPrices';
+
+interface User {
+  city?: string;
+  state?: string;
+  // add other user properties as needed
+}
 
 const FarmerDashboard: React.FC = () => {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [trades, setTrades] = useState([]);
   const [mandiPrices, setMandiPrices] = useState([]);
   const [salesData, setSalesData] = useState([]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get token from session storage
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+          router.push('/auth/login');
+          return;
+        }
+
+        // Fetch user data from your API
+        const response = await fetch('http://localhost:5009/api/user/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+
+        const userData = await response.json();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Handle error appropriately
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
 
   useEffect(() => {
     fetchProducts();
@@ -148,17 +188,10 @@ const FarmerDashboard: React.FC = () => {
           <h2 className="text-xl font-bold mb-4 flex items-center">
             <FaStore className="mr-2" /> Latest Mandi Prices
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {mandiPrices.slice(0, 3).map((price, index) => (
-              <div key={index} className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-lg">{price.commodity}</h3>
-                <div className="text-gray-600">{price.market}</div>
-                <div className="text-2xl font-bold text-green-600 mt-2">
-                  ₹{price.modal_price}/{price.unit}
-                </div>
-              </div>
-            ))}
-          </div>
+          <MandiPrices 
+            userDistrict={user?.city} 
+            userState={user?.state} 
+          />
         </div>
 
         {/* Sales Chart */}
@@ -169,10 +202,6 @@ const FarmerDashboard: React.FC = () => {
 
         {/* Bottom Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Market Prices</h2>
-            <MandiPrice />
-          </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">AI Assistant</h2>
             <AIAssistant />
