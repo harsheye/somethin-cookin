@@ -6,7 +6,7 @@ import { FaUser, FaLock, FaSeedling, FaTractor } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
+import AccountTypeModal from '@/components/modals/AccountTypeModal';
 export default function FarmerLoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +60,7 @@ export default function FarmerLoginForm() {
       router.push('/marketplace');
     }
   }, [router]);
+  const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
@@ -81,10 +82,10 @@ export default function FarmerLoginForm() {
               <FaTractor className="text-4xl text-green-600" />
             </motion.div>
             <h1 className="text-4xl font-bold text-gray-800">
-              Welcome Back, Farmer!
+              Welcome Back, User!
             </h1>
             <p className="text-lg text-gray-600">
-              Access your farming dashboard and manage your agricultural business with ease.
+              Access your farming dashboard or Customer dashboard and manage your agricultural business with ease.
             </p>
           </div>
 
@@ -134,7 +135,7 @@ export default function FarmerLoginForm() {
           </div>
 
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
-            Farmer Login
+            User Login
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -212,13 +213,22 @@ export default function FarmerLoginForm() {
               className="text-center text-sm text-gray-600 mt-4"
             >
               Don't have an account?{' '}
-              <Link href="/auth/farmer/signup" className="text-green-600 hover:text-green-700 font-medium">
-                Sign up
-              </Link>
+              <motion.button
+            onClick={() => setShowAccountTypeModal(true)}
+            className="text-green-600 hover:text-green-700 font-medium"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Sign up
+          </motion.button>
             </motion.p>
           </form>
         </motion.div>
       </div>
+      <AccountTypeModal 
+        isOpen={showAccountTypeModal} 
+        onClose={() => setShowAccountTypeModal(false)} 
+      />
     </div>
   );
 }

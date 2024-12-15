@@ -1,18 +1,15 @@
-// src/app/auth/login/page.tsx
-
 'use client';
 
-import FarmerLoginForm from '@/components/FarmerLoginForm';
+// ... other imports ...
 import AccountTypeModal from '@/components/modals/AccountTypeModal';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
 
-export default function LoginPage() {
+const LoginForm = () => {
+  // ... other states ...
   const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <FarmerLoginForm />
+    <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-md">
+      {/* ... form content ... */}
 
       <div className="text-center mt-6">
         <p className="text-gray-600">
@@ -34,4 +31,6 @@ export default function LoginPage() {
       />
     </div>
   );
-}
+};
+
+export default LoginForm; 
