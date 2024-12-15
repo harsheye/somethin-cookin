@@ -206,12 +206,7 @@ export default function FarmerLoginForm() {
               {isLoading ? 'Logging in...' : 'Login'}
             </motion.button>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-center text-sm text-gray-600 mt-4"
-            >
+            
               Don't have an account?{' '}
               <motion.button
             onClick={() => setShowAccountTypeModal(true)}
@@ -221,7 +216,7 @@ export default function FarmerLoginForm() {
           >
             Sign up
           </motion.button>
-            </motion.p>
+           
           </form>
         </motion.div>
       </div>

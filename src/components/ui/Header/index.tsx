@@ -31,16 +31,17 @@ function Header() {
         const role = sessionStorage.getItem('userRole');
         
         if (!token) {
-          handleLogout();
+          setIsAuthenticated(false);
+          setUserRole(null);
           return;
         }
 
-        // Verify token expiration if you have that info
         setIsAuthenticated(true);
         setUserRole(role);
       } catch (error) {
         console.error('Auth check failed:', error);
-        handleLogout();
+        setIsAuthenticated(false);
+        setUserRole(null);
       }
     };
 
