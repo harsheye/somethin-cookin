@@ -52,7 +52,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <CartProvider>
           {!isAuthPage && <Header />}
-          <main>{children}</main>
+          <main style={{paddingTop: '5vh'}}>{children}</main>
           <Footer />
           <Toaster />
         </CartProvider>

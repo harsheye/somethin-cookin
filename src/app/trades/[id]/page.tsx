@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { 
   FaLeaf, FaMapMarkerAlt, FaCalendar, FaUser, 
   FaStar, FaPhone, FaEnvelope, FaCheck, FaTimes,
-  FaHistory, FaChartLine
+  FaHistory, FaChartLine, FaRupeeSign
 } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
@@ -46,6 +46,24 @@ const TradeDetailsPage = ({ params }: { params: { id: string } }) => {
   const [loading, setLoading] = useState(true);
   const [isResponding, setIsResponding] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [customBid, setCustomBid] = useState('');
+  const [tradePosts, setTradePosts] = useState<any[]>([]); // Add proper type
+  const [ws, setWs] = useState<WebSocket | null>(null);
+
+  useEffect(() => {
+    // Initialize WebSocket connection
+    const websocket = new WebSocket(`ws://localhost:8080/trade/${params.id}`);
+    setWs(websocket);
+
+    websocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setTradePosts(prev => [...prev, data]);
+    };
+
+    return () => {
+      websocket.close();
+    };
+  }, [params.id]);
 
   useEffect(() => {
     fetchTradeDetails();
@@ -94,6 +112,29 @@ const TradeDetailsPage = ({ params }: { params: { id: string } }) => {
     }
   };
 
+  const handleBid = async (multiplier: number) => {
+    if (!trade) return;
+    
+    const bidAmount = multiplier ? trade.price * multiplier : parseFloat(customBid);
+    
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const response = await fetch(`http://localhost:5009/api/trades/${params.id}/bid`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount: bidAmount })
+      });
+
+      if (!response.ok) throw new Error('Failed to place bid');
+      toast.success('Bid placed successfully');
+    } catch (error) {
+      toast.error('Failed to place bid');
+    }
+  };
+
   if (loading || !trade) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20">
@@ -110,186 +151,287 @@ const TradeDetailsPage = ({ params }: { params: { id: string } }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Trade Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Trade Details Section */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{trade.cropName}</h1>
-              <div className="flex items-center text-gray-500 gap-4">
-                <span className="flex items-center gap-1">
-                  <FaLeaf className="text-green-500" />
-                  {trade.category}
-                </span>
-                <span className="flex items-center gap-1">
-                  <FaMapMarkerAlt className="text-green-500" />
-                  {trade.location}
-                </span>
-                <span className="flex items-center gap-1">
-                  <FaCalendar className="text-green-500" />
-                  {new Date(trade.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              trade.status === 'open' 
-                ? 'bg-green-100 text-green-800'
-                : trade.status === 'pending'
-                ? 'bg-yellow-100 text-yellow-800'
-                : 'bg-red-100 text-red-800'
-            }`}>
-              {trade.status}
-            </span>
-          </div>
-
-          {/* Trade Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Trade Details</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Quantity</span>
-                  <span className="font-medium">{trade.quantity} {trade.unit}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Price per {trade.unit}</span>
-                  <span className="font-medium">₹{trade.price}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Value</span>
-                  <span className="font-medium">₹{trade.price * trade.quantity}</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Important Dates</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Harvest Date</span>
-                  <span className="font-medium">{new Date(trade.harvestDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Expiry Date</span>
-                  <span className="font-medium">{new Date(trade.expiryDate).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-6">
-            <h3 className="font-semibold text-gray-700 mb-2">Description</h3>
-            <p className="text-gray-600">{trade.description}</p>
-          </div>
-        </div>
-
-        {/* Farmer Details */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Farmer Information</h2>
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <FaUser className="text-green-500" />
-                <span className="font-medium">{trade.farmer.name}</span>
-                {trade.farmer.rating >= 4.5 && (
-                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                    <FaCheck /> Verified
+          {/* Trade Header */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{trade.cropName}</h1>
+                <div className="flex items-center text-gray-500 gap-4">
+                  <span className="flex items-center gap-1">
+                    <FaLeaf className="text-green-500" />
+                    {trade.category}
                   </span>
+                  <span className="flex items-center gap-1">
+                    <FaMapMarkerAlt className="text-green-500" />
+                    {trade.location}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <FaCalendar className="text-green-500" />
+                    {new Date(trade.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                trade.status === 'open' 
+                  ? 'bg-green-100 text-green-800'
+                  : trade.status === 'pending'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {trade.status}
+              </span>
+            </div>
+
+            {/* Trade Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">Trade Details</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Quantity</span>
+                    <span className="font-medium">{trade.quantity} {trade.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Price per {trade.unit}</span>
+                    <span className="font-medium">₹{trade.price}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Value</span>
+                    <span className="font-medium">₹{trade.price * trade.quantity}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">Important Dates</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Harvest Date</span>
+                    <span className="font-medium">{new Date(trade.harvestDate).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Expiry Date</span>
+                    <span className="font-medium">{new Date(trade.expiryDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <h3 className="font-semibold text-gray-700 mb-2">Description</h3>
+              <p className="text-gray-600">{trade.description}</p>
+            </div>
+          </div>
+
+          {/* Farmer Details */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Farmer Information</h2>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FaUser className="text-green-500" />
+                  <span className="font-medium">{trade.farmer.name}</span>
+                  {trade.farmer.rating >= 4.5 && (
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                      <FaCheck /> Verified
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar
+                        key={i}
+                        className={i < Math.floor(trade.farmer.rating) ? 'text-yellow-400' : 'text-gray-300'}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    ({trade.farmer.rating} • {trade.farmer.totalTrades} trades)
+                  </span>
+                </div>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p className="flex items-center gap-2">
+                    <FaMapMarkerAlt />
+                    {trade.farmer.location}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FaHistory />
+                    Member since {new Date(trade.farmer.joinedDate).getFullYear()}
+                  </p>
+                  {showContact && (
+                    <>
+                      <p className="flex items-center gap-2">
+                        <FaPhone />
+                        {trade.farmer.phone}
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <FaEnvelope />
+                        {trade.farmer.email}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {!showContact && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowContact(true)}
+                    className="w-full bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200"
+                  >
+                    Show Contact
+                  </motion.button>
+                )}
+                {trade.status === 'open' && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleRespondToTrade}
+                    disabled={isResponding}
+                    className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50"
+                  >
+                    {isResponding ? 'Sending...' : 'Respond to Trade'}
+                  </motion.button>
                 )}
               </div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar
-                      key={i}
-                      className={i < Math.floor(trade.farmer.rating) ? 'text-yellow-400' : 'text-gray-300'}
-                    />
+            </div>
+          </div>
+
+          {/* Price History */}
+          {trade.priceHistory.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Price History</h2>
+                <div className="flex items-center text-sm text-gray-500">
+                  <FaChartLine className="mr-1" />
+                  Last {trade.priceHistory.length} updates
+                </div>
+              </div>
+              <div className="space-y-3">
+                {trade.priceHistory.map((record, index) => (
+                  <div key={index} className="flex justify-between items-center">
+                    <span className="text-gray-600">
+                      {new Date(record.date).toLocaleDateString()}
+                    </span>
+                    <span className={`font-medium ${
+                      index > 0 && record.price > trade.priceHistory[index - 1].price
+                        ? 'text-green-600'
+                        : index > 0 && record.price < trade.priceHistory[index - 1].price
+                        ? 'text-red-600'
+                        : 'text-gray-900'
+                    }`}>
+                      ₹{record.price}/{trade.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Trade Posts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Trade Posts Feed */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Trade Activity</h2>
+              <div className="h-[400px] overflow-y-auto space-y-4">
+                <AnimatePresence>
+                  {tradePosts.map((post, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="bg-gray-50 rounded-lg p-4"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{post.user}</p>
+                          <p className="text-sm text-gray-500">{post.message}</p>
+                        </div>
+                        <span className="text-green-600 font-bold">₹{post.amount}</span>
+                      </div>
+                    </motion.div>
                   ))}
-                </div>
-                <span className="text-sm text-gray-500">
-                  ({trade.farmer.rating} • {trade.farmer.totalTrades} trades)
-                </span>
-              </div>
-              <div className="space-y-1 text-sm text-gray-600">
-                <p className="flex items-center gap-2">
-                  <FaMapMarkerAlt />
-                  {trade.farmer.location}
-                </p>
-                <p className="flex items-center gap-2">
-                  <FaHistory />
-                  Member since {new Date(trade.farmer.joinedDate).getFullYear()}
-                </p>
-                {showContact && (
-                  <>
-                    <p className="flex items-center gap-2">
-                      <FaPhone />
-                      {trade.farmer.phone}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <FaEnvelope />
-                      {trade.farmer.email}
-                    </p>
-                  </>
-                )}
+                </AnimatePresence>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              {!showContact && (
+          {/* Bidding Section */}
+          <div className="space-y-4">
+            {/* Quick Bid Options */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleBid(1.1)}
+              className="w-full bg-green-100 text-green-700 p-4 rounded-lg hover:bg-green-200"
+            >
+              <div className="flex justify-between items-center">
+                <span>Bid 1.1x</span>
+                <span className="font-bold">₹{trade?.price ? (trade.price * 1.1).toFixed(2) : '0'}</span>
+              </div>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleBid(2)}
+              className="w-full bg-green-200 text-green-700 p-4 rounded-lg hover:bg-green-300"
+            >
+              <div className="flex justify-between items-center">
+                <span>Bid 2x</span>
+                <span className="font-bold">₹{trade?.price ? (trade.price * 2).toFixed(2) : '0'}</span>
+              </div>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleBid(3)}
+              className="w-full bg-green-300 text-green-700 p-4 rounded-lg hover:bg-green-400"
+            >
+              <div className="flex justify-between items-center">
+                <span>Bid 3x</span>
+                <span className="font-bold">₹{trade?.price ? (trade.price * 3).toFixed(2) : '0'}</span>
+              </div>
+            </motion.button>
+
+            {/* Custom Bid Input */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Custom Bid Amount
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <FaRupeeSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="number"
+                    value={customBid}
+                    onChange={(e) => setCustomBid(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Enter amount"
+                  />
+                </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowContact(true)}
-                  className="w-full bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200"
+                  onClick={() => handleBid(0)}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
                 >
-                  Show Contact
+                  Place Bid
                 </motion.button>
-              )}
-              {trade.status === 'open' && (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleRespondToTrade}
-                  disabled={isResponding}
-                  className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50"
-                >
-                  {isResponding ? 'Sending...' : 'Respond to Trade'}
-                </motion.button>
-              )}
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Price History */}
-        {trade.priceHistory.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Price History</h2>
-              <div className="flex items-center text-sm text-gray-500">
-                <FaChartLine className="mr-1" />
-                Last {trade.priceHistory.length} updates
-              </div>
-            </div>
-            <div className="space-y-3">
-              {trade.priceHistory.map((record, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span className="text-gray-600">
-                    {new Date(record.date).toLocaleDateString()}
-                  </span>
-                  <span className={`font-medium ${
-                    index > 0 && record.price > trade.priceHistory[index - 1].price
-                      ? 'text-green-600'
-                      : index > 0 && record.price < trade.priceHistory[index - 1].price
-                      ? 'text-red-600'
-                      : 'text-gray-900'
-                  }`}>
-                    ₹{record.price}/{trade.unit}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

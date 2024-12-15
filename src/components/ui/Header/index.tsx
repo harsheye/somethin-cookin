@@ -116,7 +116,7 @@ function Header() {
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 group-hover:w-full transition-all duration-300" />
                   </Link>
                   <Link
-                    href="/farmer/trades"
+                    href="/trades"
                     className="text-lg font-semibold text-white/80 hover:text-white relative group transition-colors duration-300"
                   >
                     Trades
