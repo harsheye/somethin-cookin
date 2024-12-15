@@ -1,37 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { 
-  FaImage, FaRupeeSign, FaBox, FaTag, 
-  FaTrash, FaArrowLeft, FaUpload, FaWeight
-} from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaImage, FaTrash, FaLeaf } from 'react-icons/fa';
+import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import PageWrapper from '@/components/layouts/PageWrapper';
-
-interface FormData {
-  name: string;
-  description: string;
-  price: number;
-  unit: number;
-  smallestSellingUnit: number;
-  category: string;
-  isForSale: boolean;
-}
+import AutumnSelect from '@/components/ui/AutumnSelect';
+import Blob from '@/components/ui/Blob';
 
 const AddProduct = () => {
-  const router = useRouter();
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+  const [activeImage, setActiveImage] = useState<number>(0);
+  const [hoveredImage, setHoveredImage] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: 0,
-    unit: 0,
-    smallestSellingUnit: 0,
+    price: '',
+    unit: '100',
+    smallestSellingUnit: '0.5',
     category: '',
     isForSale: true
   });
@@ -39,9 +26,13 @@ const AddProduct = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
+      if (images.length + files.length > 5) {
+        toast.error('Maximum 5 images allowed');
+        return;
+      }
+      
       setImages(prev => [...prev, ...files]);
       
-      // Create previews
       files.forEach(file => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -55,294 +46,211 @@ const AddProduct = () => {
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
     setPreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Add your API call here
-      const response = await fetch('http://localhost:5009/api/farmer/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) throw new Error('Failed to add product');
-
-      toast.success('Product added successfully!');
-      router.push('/farmer/products');
-    } catch (error) {
-      toast.error('Failed to add product');
-    } finally {
-      setLoading(false);
+    if (activeImage >= index) {
+      setActiveImage(Math.max(0, activeImage - 1));
     }
   };
 
   return (
-    <PageWrapper>
-      <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.back()}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaArrowLeft size={20} />
-              </motion.button>
-              <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
-            </div>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: 'rgb(0,98,65)' }}>
+      {/* Background Blobs */}
+      <Blob className="w-[40rem] h-[40rem] -top-20 -left-20 opacity-5" delay={0} />
+      <Blob className="w-[35rem] h-[35rem] top-1/2 -right-20 opacity-5" delay={0.2} />
+      <Blob className="w-[30rem] h-[30rem] bottom-0 left-1/4 opacity-5" delay={0.4} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/20"
+        >
+          {/* Header */}
+          <div className="p-6 border-b border-white/10">
+            <h1 className="text-3xl font-serif font-bold text-white">Add New Product</h1>
           </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="p-8">
-          <div className="grid grid-cols-12 gap-8">
-            {/* Left Column - Images */}
-            <div className="col-span-5">
-              <div className="sticky top-8">
-                <label className="block text-lg font-semibold text-gray-700 mb-4">
-                  Product Images <span className="text-red-500">*</span>
-                </label>
-                
-                {/* Main Image Preview */}
-                <div className="aspect-square mb-4 rounded-xl overflow-hidden bg-gray-50 border-2 border-dashed border-gray-300">
-                  {previews[0] ? (
-                    <img
-                      src={previews[0]}
-                      alt="Main preview"
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <label
-                      htmlFor="images"
-                      className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
-                    >
-                      <FaUpload className="text-4xl text-gray-400 mb-2" />
-                      <span className="text-gray-500 font-medium">Add Main Image</span>
-                      <span className="text-sm text-gray-400 mt-1">Click to upload</span>
-                    </label>
-                  )}
-                </div>
+          {/* Content */}
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Side - Images */}
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6">
+                <div className="relative aspect-square rounded-lg overflow-hidden">
+                  {/* Main Image Display */}
+                  <AnimatePresence>
+                    {previews.length > 0 ? (
+                      <motion.div
+                        key={hoveredImage ?? activeImage}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="w-full h-full"
+                      >
+                        <Image
+                          src={previews[hoveredImage ?? activeImage]}
+                          alt="Product preview"
+                          fill
+                          className="object-cover"
+                        />
+                      </motion.div>
+                    ) : (
+                      <div className="flex items-center justify-center h-full bg-gray-50">
+                        <FaImage className="text-6xl text-gray-300" />
+                      </div>
+                    )}
+                  </AnimatePresence>
 
-                {/* Image Thumbnails */}
-                <div className="grid grid-cols-4 gap-4">
-                  {[...Array(4)].map((_, index) => (
-                    <div
-                      key={index}
-                      className={`
-                        aspect-square rounded-lg overflow-hidden
-                        ${previews[index + 1] ? 'relative group' : 'border-2 border-dashed border-gray-300'}
-                        bg-gray-50
-                      `}
-                    >
-                      {previews[index + 1] ? (
-                        <>
-                          <img
-                            src={previews[index + 1]}
-                            alt={`Preview ${index + 2}`}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index + 1)}
-                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <FaTrash size={12} />
-                          </button>
-                        </>
-                      ) : (
-                        <label
-                          htmlFor="images"
-                          className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+                  {/* Image Preview Strip */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent">
+                    <div className="flex gap-4 justify-center">
+                      {previews.map((preview, index) => (
+                        <motion.div
+                          key={preview}
+                          whileHover={{ scale: 1.1 }}
+                          className="relative"
                         >
-                          <span className="text-sm text-gray-400">+</span>
-                        </label>
+                          <div 
+                            className={`relative w-16 h-16 rounded-lg overflow-hidden cursor-pointer
+                              ${activeImage === index ? 'ring-2 ring-white' : 'ring-1 ring-white/50'}`}
+                            onClick={() => setActiveImage(index)}
+                            onMouseEnter={() => setHoveredImage(index)}
+                            onMouseLeave={() => setHoveredImage(null)}
+                          >
+                            <Image
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeImage(index);
+                              }}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full"
+                            >
+                              <FaTrash size={10} />
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      ))}
+
+                      {images.length < 5 && (
+                        <motion.label
+                          whileHover={{ scale: 1.1 }}
+                          className="relative w-16 h-16 rounded-lg border-2 border-dashed border-white/50 
+                                   flex items-center justify-center cursor-pointer hover:border-white"
+                        >
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={handleImageChange}
+                            accept="image/*"
+                            multiple
+                          />
+                          <FaImage className="text-xl text-white" />
+                        </motion.label>
                       )}
                     </div>
-                  ))}
+                  </div>
                 </div>
-
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  id="images"
-                  required
-                />
               </div>
-            </div>
 
-            {/* Right Column - Product Details */}
-            <div className="col-span-7 space-y-6">
-              {/* Name and Description Section */}
+              {/* Right Side - Form */}
               <div className="space-y-6">
-                <div>
-                  <label className="block text-lg font-semibold text-gray-700 mb-2">
-                    Product Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                    minLength={3}
-                    maxLength={100}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
-                    placeholder="Enter a descriptive name"
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Product Name */}
+                  <div className="md:col-span-2">
+                    <label className="block text-lg font-serif font-bold text-amber-800 mb-2">
+                      Product Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-transparent backdrop-blur-sm"
+                      placeholder="Product Name"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-lg font-semibold text-gray-700 mb-2">
-                    Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    required
-                    rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Describe your product in detail..."
-                  />
-                </div>
-              </div>
-
-              {/* Price and Category Section */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-lg font-semibold text-gray-700 mb-2">
-                    Price (₹) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                  {/* Price and Unit */}
+                  <div>
+                    <label className="block text-lg font-serif font-bold text-amber-800 mb-2">
+                      Price (₹)
+                    </label>
                     <input
                       type="number"
                       value={formData.price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
-                      required
-                      min={0}
-                      className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="0.00"
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-transparent backdrop-blur-sm"
+                      placeholder="Price"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-lg font-semibold text-gray-700 mb-2">
-                    Category <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white"
-                  >
-                    <option value="">Select category</option>
-                    <option value="vegetables">Vegetables</option>
-                    <option value="fruits">Fruits</option>
-                    <option value="grains">Grains</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Units Section */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-lg font-semibold text-gray-700 mb-2">
-                    Unit Size <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
+                  <div>
+                    <label className="block text-lg font-serif font-bold text-amber-800 mb-2">
+                      Unit Size (g)
+                    </label>
                     <input
                       type="number"
                       value={formData.unit}
-                      onChange={(e) => setFormData(prev => ({ ...prev, unit: Number(e.target.value) }))}
-                      required
-                      min={0}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="e.g., 100"
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                      className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-transparent backdrop-blur-sm"
+                      placeholder="Unit Size"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">g</span>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-lg font-semibold text-gray-700 mb-2">
-                    Smallest Unit <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={formData.smallestSellingUnit}
-                      onChange={(e) => setFormData(prev => ({ ...prev, smallestSellingUnit: Number(e.target.value) }))}
-                      required
-                      min={0}
-                      step={0.1}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="e.g., 0.5"
+                  {/* Category */}
+                  <div className="md:col-span-2">
+                    <AutumnSelect
+                      label="Category"
+                      value={formData.category}
+                      onChange={(value) => setFormData({ ...formData, category: value })}
+                      options={[
+                        { label: 'Vegetables', value: 'vegetables' },
+                        { label: 'Fruits', value: 'fruits' },
+                        { label: 'Grains', value: 'grains' },
+                        { label: 'Spices', value: 'spices' }
+                      ]}
+                      placeholder="Select a category"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">kg</span>
                   </div>
-                </div>
-              </div>
 
-              {/* Save as Draft Toggle */}
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div>
-                  <label className="text-lg font-semibold text-gray-700">Save as Draft?</label>
-                  <p className="text-sm text-gray-500">Product won't be visible to customers if saved as draft</p>
-                </div>
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={!formData.isForSale}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isForSale: !e.target.checked }))}
-                    className="sr-only"
-                    id="draft-toggle"
-                  />
-                  <label
-                    htmlFor="draft-toggle"
-                    className={`
-                      block w-14 h-8 rounded-full transition-colors duration-300 cursor-pointer
-                      ${formData.isForSale ? 'bg-green-500' : 'bg-gray-300'}
-                    `}
-                  >
-                    <span
-                      className={`
-                        block w-6 h-6 mt-1 ml-1 rounded-full bg-white transition-transform duration-300
-                        ${formData.isForSale ? 'transform translate-x-6' : ''}
-                      `}
+                  {/* Description */}
+                  <div className="md:col-span-2">
+                    <label className="block text-lg font-serif font-bold text-amber-800 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
+                      className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-transparent backdrop-blur-sm"
+                      placeholder="Description"
                     />
-                  </label>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="md:col-span-2">
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="w-full py-3 bg-gradient-to-r from-orange-400 to-amber-500 text-white 
+                               font-serif font-bold rounded-lg shadow-md hover:shadow-lg
+                               transition-all flex items-center justify-center gap-2"
+                    >
+                      <FaLeaf className="text-white/80" />
+                      Add Product
+                    </motion.button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Submit Button */}
-          <div className="mt-8 flex justify-end">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={loading}
-              className="bg-green-500 text-white px-8 py-3 rounded-lg flex items-center gap-2 hover:bg-green-600 transition-colors text-lg font-medium"
-            >
-              {loading ? 'Adding Product...' : 'Add Product'}
-            </motion.button>
-          </div>
-        </form>
+        </motion.div>
       </div>
-    </PageWrapper>
+    </div>
   );
 };
 

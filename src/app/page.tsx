@@ -1,14 +1,51 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
 import { FaTractor, FaLeaf, FaHandshake, FaChartLine, FaArrowRight } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 // import FloatingHeader from '@/components/FloatingHeader';
+import NumberTicker from '@/components/ui/NumberTicker';
+import Footer from '@/components/ui/Footer';
+
+const Blob1 = () => (
+  <motion.svg viewBox="0 0 200 200" className="w-full h-full">
+    <motion.path
+      fill="#A7F0BA"
+      d="M30.2,-27C44.9,-30.9,66.5,-29.8,66,-23.3C65.6,-16.8,43.1,-5.1,33.6,6.9C24.2,18.8,27.8,31,24.3,41.7C20.9,52.4,10.4,61.6,-2.9,65.6C-16.3,69.6,-32.5,68.4,-35.3,57.5C-38,46.5,-27.3,26,-21.3,14.1C-15.3,2.2,-14.2,-1,-16.7,-9.3C-19.3,-17.5,-25.7,-30.8,-23.5,-30.9C-21.4,-31,-10.7,-17.9,-1.5,-15.9C7.8,-13.9,15.6,-23,30.2,-27Z"
+      animate={{
+        d: [
+          "M30.2,-27C44.9,-30.9,66.5,-29.8,66,-23.3C65.6,-16.8,43.1,-5.1,33.6,6.9C24.2,18.8,27.8,31,24.3,41.7C20.9,52.4,10.4,61.6,-2.9,65.6C-16.3,69.6,-32.5,68.4,-35.3,57.5C-38,46.5,-27.3,26,-21.3,14.1C-15.3,2.2,-14.2,-1,-16.7,-9.3C-19.3,-17.5,-25.7,-30.8,-23.5,-30.9C-21.4,-31,-10.7,-17.9,-1.5,-15.9C7.8,-13.9,15.6,-23,30.2,-27Z",
+          "M51.9,-33.2C68.1,-21.1,82.6,0.6,76.5,13.5C70.4,26.4,43.6,30.6,21.5,39.1C-0.6,47.6,-17.9,60.4,-31.4,57C-45,53.7,-54.8,34.2,-58.9,14C-63.1,-6.1,-61.5,-27,-50.8,-37.9C-40,-48.7,-20,-49.6,-1.1,-48.8C17.8,-47.9,35.7,-45.3,51.9,-33.2Z"
+        ],
+        transform: ["translate(100 100)", "translate(120 120)"]
+      }}
+      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+    />
+  </motion.svg>
+);
+
+const Blob2 = () => (
+  <motion.svg viewBox="0 0 200 200" className="w-full h-full">
+    <motion.path
+      fill="#A7F0BA"
+      d="M36,-40.6C40.6,-23,34,-8.4,31.1,8.1C28.1,24.5,28.7,42.7,19.2,51.9C9.7,61.1,-10,61.3,-19,52.1C-28.1,42.9,-26.5,24.3,-25,11.3C-23.5,-1.7,-22.2,-9.2,-18,-26.7C-13.9,-44.2,-6.9,-71.8,4.4,-75.3C15.7,-78.8,31.5,-58.2,36,-40.6Z"
+      animate={{
+        d: [
+          "M36,-40.6C40.6,-23,34,-8.4,31.1,8.1C28.1,24.5,28.7,42.7,19.2,51.9C9.7,61.1,-10,61.3,-19,52.1C-28.1,42.9,-26.5,24.3,-25,11.3C-23.5,-1.7,-22.2,-9.2,-18,-26.7C-13.9,-44.2,-6.9,-71.8,4.4,-75.3C15.7,-78.8,31.5,-58.2,36,-40.6Z",
+          "M63.3,-51.1C78.1,-31.8,83.7,-5.7,78.8,18.8C73.8,43.3,58.4,66.3,37.1,76.2C15.8,86.1,-11.4,83.1,-34.4,71.8C-57.3,60.6,-76.1,41.1,-81.4,18.4C-86.7,-4.2,-78.5,-30.2,-62.7,-49.7C-46.9,-69.2,-23.4,-82.3,0.4,-82.6C24.2,-82.9,48.4,-70.4,63.3,-51.1Z"
+        ],
+        transform: ["translate(100 100)", "translate(80 80)"]
+      }}
+      transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+    />
+  </motion.svg>
+);
 
 const HomePage = () => {
   const router = useRouter();
+  const { scrollYProgress } = useScroll();
 
   const features = [
     {
@@ -38,126 +75,169 @@ const HomePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+    <div className="flex flex-col min-h-screen">
+      {/* Fixed Background with Blobs */}
+      <div 
+        className="fixed inset-0 w-full h-full overflow-hidden" 
+        style={{ backgroundColor: 'rgb(0,98,65)' }}
+      >
+        {/* Larger Blob 1 */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center z-10 px-4"
-        >
-          <h1 className="text-5xl md:text-7xl font-bold text-green-800 mb-6">
-            Welcome to{' '}
-            <TypeAnimation
-              sequence={[
-                'Swastik',
-                2000,
-                'The Future',
-                2000,
-                'Innovation',
-                2000,
-                'Agriculture',
-                2000,
-              ]}
-              wrapper="span"
-              repeat={Infinity}
-              className="text-green-600"
-            />
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Revolutionizing farming through technology and direct market access
-          </p>
-          <div className="flex gap-4 justify-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/auth/farmer/signup')}
-              className="bg-green-500 text-white px-8 py-3 rounded-full hover:bg-green-600 transition-all flex items-center gap-2"
-            >
-              Get Started <FaArrowRight />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/marketplace')}
-              className="bg-white text-green-600 px-8 py-3 rounded-full hover:bg-green-50 transition-all border-2 border-green-500"
-            >
-              Explore Market
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Animated background elements */}
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 180, 360],
+          className="absolute -top-[25%] -left-[25%] w-[150vw] h-[150vh]"
+          style={{
+            y: useTransform(scrollYProgress, [0, 1], [0, -300]),
+            rotate: useTransform(scrollYProgress, [0, 1], [0, 360]),
+            scale: useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.2, 0.8])
           }}
-          transition={{ duration: 20, repeat: Infinity }}
-          className="absolute inset-0 z-0"
         >
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-green-200 rounded-full opacity-20 blur-3xl" />
-          <div className="absolute bottom-1/3 right-1/3 w-48 h-48 bg-blue-200 rounded-full opacity-20 blur-3xl" />
+          <Blob1 />
         </motion.div>
-      </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.h2
+        {/* Larger Blob 2 */}
+        <motion.div
+          className="absolute -bottom-[25%] -right-[25%] w-[150vw] h-[150vh]"
+          style={{
+            y: useTransform(scrollYProgress, [0, 1], [0, 300]),
+            rotate: useTransform(scrollYProgress, [0, 1], [0, -360]),
+            scale: useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.8, 1.2])
+          }}
+        >
+          <Blob2 />
+        </motion.div>
+
+        {/* Optional: Add more blobs for better effect */}
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vh]"
+          style={{
+            rotate: useTransform(scrollYProgress, [0, 1], [0, 180]),
+            scale: useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]),
+            opacity: useTransform(scrollYProgress, [0, 0.5, 1], [0.3, 0.5, 0.3])
+          }}
+        >
+          <Blob1 />
+        </motion.div>
+      </div>
+
+      {/* Main Content */}
+      <main className="relative z-10 flex-grow">
+        {/* Hero Section */}
+        <section className="min-h-screen flex items-center justify-center">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl font-bold text-center text-green-800 mb-16"
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center px-4"
           >
-            Why Choose Swastik?
-          </motion.h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                className={`p-6 rounded-xl bg-gradient-to-br ${feature.color} text-white transform transition-all duration-300 hover:shadow-xl`}
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+              Welcome to{' '}
+              <TypeAnimation
+                sequence={[
+                  'Swastik',
+                  2000,
+                  'The Future',
+                  2000,
+                  'Innovation',
+                  2000,
+                  'Agriculture',
+                  2000,
+                ]}
+                wrapper="span"
+                repeat={Infinity}
+                className="text-green-300"
+              />
+            </h1>
+            <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+              Revolutionizing farming through technology and direct market access
+            </p>
+            <div className="flex gap-4 justify-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/auth/farmer/signup')}
+                className="bg-green-500 text-white px-8 py-3 rounded-full hover:bg-green-600 transition-all flex items-center gap-2"
               >
-                <feature.icon className="text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-sm opacity-90">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 bg-white/50 backdrop-blur-lg">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { number: "10K+", label: "Farmers" },
-              { number: "₹50M+", label: "Trading Volume" },
-              { number: "100+", label: "Markets Connected" },
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="text-center"
+                Get Started <FaArrowRight />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/marketplace')}
+                className="bg-white text-green-600 px-8 py-3 rounded-full hover:bg-green-50 transition-all border-2 border-green-500"
               >
-                <h3 className="text-5xl font-bold text-green-600 mb-2">{stat.number}</h3>
-                <p className="text-gray-600">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+                Explore Market
+              </motion.button>
+            </div>
+          </motion.div>
+        </section>
 
-      {/* <FloatingHeader /> */}
+        {/* Features Section - Add some transparency to see blobs */}
+        <section className="py-20 px-4 bg-white/10 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-4xl font-bold text-center mb-16"
+            >
+              <span className="bg-gradient-to-r from-white via-green-300 to-white text-transparent bg-clip-text animate-gradient">
+                Why Choose Swastik?
+              </span>
+            </motion.h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2 }}
+                  whileHover={{ scale: 1.05, rotate: 2 }}
+                  className={`p-6 rounded-xl bg-gradient-to-br ${feature.color} text-white/90 backdrop-blur-md shadow-xl border border-white/20`}
+                >
+                  <feature.icon className="text-4xl mb-4" />
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-sm opacity-90">{feature.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Section */}
+        <section className="py-20 bg-[rgba(0,0,0,0.3)] backdrop-blur-md">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                { number: 10000, label: "Farmers", prefix: "", suffix: "+" },
+                { number: 50, label: "Trading Volume", prefix: "₹", suffix: "M+" },
+                { number: 100, label: "Markets Connected", prefix: "", suffix: "+" },
+              ].map((stat, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, amount: 0.8 }}
+                  className="p-8 rounded-2xl bg-black/30 border border-white/10 text-center transform hover:scale-105 transition-transform shadow-xl"
+                >
+                  <h3 className="text-5xl font-bold text-white mb-2">
+                    <NumberTicker 
+                      value={stat.number} 
+                      prefix={stat.prefix} 
+                      suffix={stat.suffix}
+                    />
+                  </h3>
+                  <p className="text-white/90 font-medium">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-20 bg-[rgb(0,98,65)] border-t border-white/10">
+        <Footer />
+      </footer>
     </div>
   );
 };

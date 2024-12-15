@@ -142,12 +142,14 @@ const FarmerProducts = () => {
 
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Products</h1>
-          <Link
-            href="/farmer/products/add"
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowAddModal(true)}
             className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
           >
             <FaPlus /> Add New Product
-          </Link>
+          </motion.button>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 mb-8">

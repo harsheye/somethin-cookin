@@ -90,3 +90,70 @@ body {
   animation: border-beam 4s linear infinite;
   border-image-slice: 1;
 }
+
+/* Autumn Calendar Styles */
+.autumn-calendar {
+  @apply border-2 border-orange-100 rounded-lg shadow-xl overflow-hidden font-serif bg-white;
+}
+
+.autumn-calendar .react-datepicker__month-container {
+  @apply bg-orange-50/50;
+}
+
+.autumn-calendar .react-datepicker__day {
+  @apply hover:bg-orange-100 rounded-full transition-colors font-medium;
+}
+
+.autumn-calendar .react-datepicker__day--selected {
+  @apply bg-orange-500 text-white hover:bg-orange-600;
+}
+
+.autumn-calendar .react-datepicker__day--keyboard-selected {
+  @apply bg-orange-200 text-amber-900;
+}
+
+.autumn-calendar .react-datepicker__day-name {
+  @apply text-amber-800 font-medium;
+}
+
+.autumn-calendar .react-datepicker__header {
+  @apply bg-transparent border-none;
+}
+
+.autumn-calendar .react-datepicker__current-month {
+  @apply text-amber-900 font-serif font-bold;
+}
+
+.autumn-calendar .react-datepicker__day--disabled {
+  @apply text-gray-300 hover:bg-transparent cursor-not-allowed;
+}
+
+/* Make entire input clickable for calendar */
+.calendar-input-wrapper {
+  @apply relative cursor-pointer;
+}
+
+.calendar-input-wrapper input {
+  @apply cursor-pointer;
+}
+
+.calendar-input-wrapper .calendar-icon {
+  @apply pointer-events-none;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 8s ease infinite;
+}

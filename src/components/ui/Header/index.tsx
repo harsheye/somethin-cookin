@@ -13,6 +13,7 @@ function Header() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,10 +73,11 @@ function Header() {
         className={`
           transition-all duration-700 ease-in-out
           ${isScrolled 
-            ? 'max-w-7xl mx-auto bg-gradient-to-r from-green-600/90 via-green-500/80 to-green-600/90 backdrop-blur-lg shadow-lg rounded-2xl transform scale-95' 
-            : 'bg-gradient-to-r from-green-600 via-green-500 to-green-600 transform scale-100'
+            ? 'max-w-7xl mx-auto backdrop-blur-lg shadow-lg rounded-2xl transform scale-95' 
+            : 'transform scale-100'
           }
         `}
+        style={{ backgroundColor: 'rgb(30,57,50)' }}
       >
         <div className={`${isScrolled ? 'px-6' : 'px-8'} transition-all duration-700 ease-in-out`}>
           <div className="flex items-center justify-between h-16">
@@ -98,24 +100,27 @@ function Header() {
             <nav className="hidden md:flex items-center space-x-12">
               <Link
                 href="/marketplace"
-                className="text-lg font-semibold text-white hover:text-green-100 transition-colors duration-300"
+                className="text-lg font-semibold text-white/80 hover:text-white relative group transition-colors duration-300"
               >
                 Marketplace
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 group-hover:w-full transition-all duration-300" />
               </Link>
 
               {isAuthenticated && userRole === 'farmer' && (
                 <>
                   <Link
                     href="/farmer/dashboard"
-                    className="text-lg font-semibold text-white hover:text-green-100 transition-colors duration-300"
+                    className="text-lg font-semibold text-white/80 hover:text-white relative group transition-colors duration-300"
                   >
                     Dashboard
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 group-hover:w-full transition-all duration-300" />
                   </Link>
                   <Link
                     href="/farmer/trades"
-                    className="text-lg font-semibold text-white hover:text-green-100 transition-colors duration-300"
+                    className="text-lg font-semibold text-white/80 hover:text-white relative group transition-colors duration-300"
                   >
                     Trades
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 group-hover:w-full transition-all duration-300" />
                   </Link>
                 </>
               )}
@@ -123,19 +128,21 @@ function Header() {
               {isAuthenticated && userRole === 'customer' && (
                 <Link
                   href="/cart"
-                  className="text-lg font-semibold text-white hover:text-green-100 transition-colors duration-300"
+                  className="text-lg font-semibold text-white/80 hover:text-white relative group transition-colors duration-300"
                 >
                   Cart
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 group-hover:w-full transition-all duration-300" />
                 </Link>
               )}
             </nav>
 
             {/* Profile Section */}
             {isAuthenticated ? (
-              <div className="relative group">
+              <div className="relative group" onMouseLeave={() => setIsDropdownOpen(false)}>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                     isScrolled 
                       ? 'bg-white/10 hover:bg-white/20' 
@@ -145,39 +152,49 @@ function Header() {
                   <FaUser className="text-lg text-white" />
                 </motion.div>
 
-                <div className="hidden group-hover:block absolute right-0 mt-2 w-48 backdrop-blur-md rounded-xl shadow-lg py-1 z-50 bg-gradient-to-b from-green-600/95 to-green-700/95">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
-                  >
-                    <FaUser className="text-green-200" /> Profile
-                  </Link>
-                  
-                  {userRole === 'farmer' && (
-                    <Link
-                      href="/farmer/trades"
-                      className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-48 backdrop-blur-md rounded-xl shadow-lg py-1 z-50 bg-gradient-to-b from-green-600/95 to-green-700/95"
+                      onMouseEnter={() => setIsDropdownOpen(true)}
                     >
-                      <FaExchangeAlt className="text-green-200" /> Trades
-                    </Link>
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                      >
+                        <FaUser className="text-green-200" /> Profile
+                      </Link>
+                      
+                      {userRole === 'farmer' && (
+                        <Link
+                          href="/farmer/trades"
+                          className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                        >
+                          <FaExchangeAlt className="text-green-200" /> Trades
+                        </Link>
+                      )}
+                      
+                      {userRole === 'customer' && (
+                        <Link
+                          href="/cart"
+                          className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                        >
+                          <FaShoppingCart className="text-green-200" /> Cart
+                        </Link>
+                      )}
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-white/10 flex items-center gap-2 transition-colors"
+                      >
+                        <FaSignOutAlt className="text-red-300" /> Logout
+                      </button>
+                    </motion.div>
                   )}
-                  
-                  {userRole === 'customer' && (
-                    <Link
-                      href="/cart"
-                      className="block px-4 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
-                    >
-                      <FaShoppingCart className="text-green-200" /> Cart
-                    </Link>
-                  )}
-                  
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-white/10 flex items-center gap-2 transition-colors"
-                  >
-                    <FaSignOutAlt className="text-red-300" /> Logout
-                  </button>
-                </div>
+                </AnimatePresence>
               </div>
             ) : (
               <Link
