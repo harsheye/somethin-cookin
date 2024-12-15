@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google';
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from '@/contexts/CartContext';
+import { FaTractor, FaShoppingCart, FaCheck } from 'react-icons/fa';
 
 // Dynamically import components with fallback
 const Header = dynamic(
@@ -23,7 +24,7 @@ const Header = dynamic(
 );
 
 const Footer = dynamic(
-  () => import('@/components/Footer'),
+  () => import('@/components/ui/Footer'),
   {
     ssr: false,
     loading: () => (

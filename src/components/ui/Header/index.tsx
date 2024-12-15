@@ -64,37 +64,37 @@ function Header() {
   };
 
   return (
-    <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-in-out 
-      ${isScrolled ? 'px-6 pt-8' : ''}`}
-    >
+    <div className="fixed top-0 left-0 right-0 z-50">
       <motion.header
         initial={{ y: 0 }}
         animate={{ y: 0 }}
         className={`
-          transition-all duration-700 ease-in-out
-          ${isScrolled 
-            ? 'max-w-7xl mx-auto backdrop-blur-lg shadow-lg rounded-2xl transform scale-95' 
-            : 'transform scale-100'
-          }
+          w-full transition-all duration-300
+          ${isScrolled ? 'px-4 py-4' : 'py-4'}
         `}
-        style={{ backgroundColor: 'rgb(30,57,50)' }}
+        style={{ backgroundColor: isScrolled ? 'transparent' : 'rgb(30,57,50)' }}
       >
-        <div className={`${isScrolled ? 'px-6' : 'px-8'} transition-all duration-700 ease-in-out`}>
-          <div className="flex items-center justify-between h-16">
+        <div 
+          className={`
+            max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
+            ${isScrolled 
+              ? 'bg-[rgb(30,57,50)] backdrop-blur-lg shadow-lg rounded-2xl border border-white/10 py-2' 
+              : ''
+            }
+          `}
+        >
+          <div className={`flex items-center justify-between ${isScrolled ? 'h-16' : 'h-16'}`}>
             {/* Logo Section */}
-            <div 
-              className="flex items-center cursor-pointer" 
-              onClick={() => router.push('/')}
-            >
+            <Link href="/" className="flex items-center gap-3">
               <img
                 src="/swastik-logo.png"
                 alt="Swastik"
-                className="h-10 w-auto"
+                className={`transition-all duration-300 ${isScrolled ? 'h-10' : 'h-10'}`}
               />
-              <span className="ml-3 text-xl font-bold text-white">
+              <span className={`font-bold text-white transition-all duration-300 ${isScrolled ? 'text-lg' : 'text-xl'}`}>
                 Swastik
               </span>
-            </div>
+            </Link>
 
             {/* Center Navigation */}
             <nav className="hidden md:flex items-center space-x-12">

@@ -21,10 +21,11 @@ const CircularBlob = ({ className }: { className: string }) => (
 const Footer = () => {
   return (
     <footer 
-      className="relative overflow-hidden mt-auto" 
+      className="relative overflow-hidden w-full"
       style={{ 
         backgroundColor: 'rgb(0,98,65)',
-        marginBottom: '-1px'
+        marginBottom: '-1px',
+        marginTop: 'auto'
       }}
     >
       {/* Fixed Circular Blobs */}

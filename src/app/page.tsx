@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
-import { FaTractor, FaLeaf, FaHandshake, FaChartLine, FaArrowRight } from 'react-icons/fa';
+import { FaTractor, FaLeaf, FaHandshake, FaChartLine, FaArrowRight, FaShoppingCart, FaCheck } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 // import FloatingHeader from '@/components/FloatingHeader';
 import NumberTicker from '@/components/ui/NumberTicker';
 import Footer from '@/components/ui/Footer';
+import { AnimatePresence } from 'framer-motion';
 
 const Blob1 = () => (
   <motion.svg viewBox="0 0 200 200" className="w-full h-full">
@@ -43,9 +44,130 @@ const Blob2 = () => (
   </motion.svg>
 );
 
+const AccountTypeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const router = useRouter();
+  
+  const accountTypes = [
+    {
+      type: 'Farmer',
+      description: 'Sell your produce directly to customers',
+      benefits: [
+        'Direct market access',
+        'Better profit margins',
+        'Real-time market insights',
+        'Secure payments',
+        'Track your sales'
+      ],
+      icon: FaTractor,
+      color: 'from-green-500 to-green-700',
+      route: '/auth/farmer/signup'
+    },
+    {
+      type: 'Customer',
+      description: 'Buy fresh produce directly from farmers',
+      benefits: [
+        'Fresh farm products',
+        'Competitive prices',
+        'Quality assurance',
+        'Direct farmer connect',
+        'Convenient delivery'
+      ],
+      icon: FaShoppingCart,
+      color: 'from-blue-500 to-blue-700',
+      route: '/auth/customer/signup'
+    }
+  ];
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", bounce: 0.2 }}
+          className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-white/10"
+        >
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white/60 hover:text-white"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </motion.button>
+
+          <div className="max-w-6xl mx-auto p-8">
+            <div className="text-center mb-8">
+              <motion.h2 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-3xl font-bold text-white mb-4"
+              >
+                Choose Your Account Type
+              </motion.h2>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-white/80 text-lg"
+              >
+                Select how you want to use Swastik platform
+              </motion.p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {accountTypes.map((account, index) => (
+                <motion.div
+                  key={account.type}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.2 + 0.2 }}
+                  whileHover={{ scale: 1.02 }}
+                  className={`bg-gradient-to-br ${account.color} p-8 rounded-2xl border border-white/10 hover:border-white/20 transition-all`}
+                >
+                  <account.icon className="text-4xl text-white mb-4" />
+                  <h3 className="text-2xl font-bold text-white mb-2">{account.type}</h3>
+                  <p className="text-white/80 mb-6">{account.description}</p>
+                  
+                  <ul className="space-y-3 mb-8">
+                    {account.benefits.map((benefit, i) => (
+                      <motion.li 
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.2 + i * 0.1 + 0.4 }}
+                        className="flex items-center text-white/90"
+                      >
+                        <FaCheck className="text-green-300 mr-2" /> {benefit}
+                      </motion.li>
+                    ))}
+                  </ul>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => router.push(account.route)}
+                    className="w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-colors"
+                  >
+                    Continue as {account.type}
+                  </motion.button>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const HomePage = () => {
   const router = useRouter();
   const { scrollYProgress } = useScroll();
+  const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
 
   const features = [
     {
@@ -119,7 +241,7 @@ const HomePage = () => {
       </div>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-grow">
+      <main className="relative z-10 flex-1">
         {/* Hero Section */}
         <section className="min-h-screen flex items-center justify-center">
           <motion.div
@@ -152,7 +274,7 @@ const HomePage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/auth/farmer/signup')}
+                onClick={() => setShowAccountTypeModal(true)}
                 className="bg-green-500 text-white px-8 py-3 rounded-full hover:bg-green-600 transition-all flex items-center gap-2"
               >
                 Get Started <FaArrowRight />
@@ -169,21 +291,21 @@ const HomePage = () => {
           </motion.div>
         </section>
 
-        {/* Features Section - Add some transparency to see blobs */}
-        <section className="py-20 px-4 bg-white/10 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto">
+        {/* Features Section - Increased height and spacing */}
+        <section className="min-h-screen py-32 px-4 bg-white/10 backdrop-blur-sm flex items-center">
+          <div className="max-w-7xl mx-auto w-full">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-4xl font-bold text-center mb-16"
+              className="text-4xl font-bold text-center mb-24"
             >
               <span className="bg-gradient-to-r from-white via-green-300 to-white text-transparent bg-clip-text animate-gradient">
                 Why Choose Swastik?
               </span>
             </motion.h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
               {features.map((feature, index) => (
                 <motion.div
                   key={index}
@@ -192,21 +314,21 @@ const HomePage = () => {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.2 }}
                   whileHover={{ scale: 1.05, rotate: 2 }}
-                  className={`p-6 rounded-xl bg-gradient-to-br ${feature.color} text-white/90 backdrop-blur-md shadow-xl border border-white/20`}
+                  className={`p-8 rounded-xl bg-gradient-to-br ${feature.color} text-white/90 backdrop-blur-md shadow-xl border border-white/20`}
                 >
-                  <feature.icon className="text-4xl mb-4" />
-                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-sm opacity-90">{feature.description}</p>
+                  <feature.icon className="text-5xl mb-6" />
+                  <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+                  <p className="text-base opacity-90 leading-relaxed">{feature.description}</p>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-20 bg-[rgba(0,0,0,0.3)] backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Stats Section - Increased height and spacing */}
+        <section className="min-h-screen py-32 bg-[rgba(0,0,0,0.3)] backdrop-blur-md flex items-center">
+          <div className="max-w-7xl mx-auto px-4 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
               {[
                 { number: 10000, label: "Farmers", prefix: "", suffix: "+" },
                 { number: 50, label: "Trading Volume", prefix: "₹", suffix: "M+" },
@@ -217,16 +339,16 @@ const HomePage = () => {
                   initial={{ opacity: 0, scale: 0.5 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true, amount: 0.8 }}
-                  className="p-8 rounded-2xl bg-black/30 border border-white/10 text-center transform hover:scale-105 transition-transform shadow-xl"
+                  className="p-12 rounded-2xl bg-black/30 border border-white/10 text-center transform hover:scale-105 transition-transform shadow-xl"
                 >
-                  <h3 className="text-5xl font-bold text-white mb-2">
+                  <h3 className="text-6xl font-bold text-white mb-4">
                     <NumberTicker 
                       value={stat.number} 
                       prefix={stat.prefix} 
                       suffix={stat.suffix}
                     />
                   </h3>
-                  <p className="text-white/90 font-medium">{stat.label}</p>
+                  <p className="text-xl text-white/90 font-medium">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -234,8 +356,11 @@ const HomePage = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <Footer />
+      {/* Account Type Modal */}
+      <AccountTypeModal 
+        isOpen={showAccountTypeModal} 
+        onClose={() => setShowAccountTypeModal(false)} 
+      />
     </div>
   );
 };
