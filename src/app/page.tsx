@@ -235,9 +235,7 @@ const HomePage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-20 bg-[rgb(0,98,65)] border-t border-white/10">
-        <Footer />
-      </footer>
+      <Footer />
     </div>
   );
 };
