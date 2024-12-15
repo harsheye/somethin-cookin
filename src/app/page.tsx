@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
 import { FaTractor, FaLeaf, FaHandshake, FaChartLine, FaArrowRight, FaShoppingCart, FaCheck } from 'react-icons/fa';
@@ -49,6 +49,30 @@ const HomePage = () => {
   const router = useRouter();
   const { scrollYProgress } = useScroll();
   const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check auth status
+    const token = sessionStorage.getItem('token');
+    const role = sessionStorage.getItem('userRole');
+    
+    if (token) {
+      setIsAuthenticated(true);
+      setUserRole(role);
+    }
+  }, []);
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      if (userRole === 'farmer') {
+        router.push('/farmer/dashboard');
+      }
+      // If customer, button won't be visible
+    } else {
+      setShowAccountTypeModal(true);
+    }
+  };
 
   const features = [
     {
@@ -152,14 +176,16 @@ const HomePage = () => {
               Revolutionizing farming through technology and direct market access
             </p>
             <div className="flex gap-4 justify-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowAccountTypeModal(true)}
-                className="bg-green-500 text-white px-8 py-3 rounded-full hover:bg-green-600 transition-all flex items-center gap-2"
-              >
-                Get Started <FaArrowRight />
-              </motion.button>
+              {(!isAuthenticated || userRole === 'farmer') && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleGetStarted}
+                  className="bg-green-500 text-white px-8 py-3 rounded-full hover:bg-green-600 transition-all flex items-center gap-2"
+                >
+                  {isAuthenticated ? 'Go to Dashboard' : 'Get Started'} <FaArrowRight />
+                </motion.button>
+              )}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
